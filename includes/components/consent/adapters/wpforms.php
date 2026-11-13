@@ -35,10 +35,12 @@ function pkwyc_consent_wpforms_register() {
 		/**
 		 * Options in the builder.
 		 *
-		 * Deliberately few. The wording is not editable here: it is set once
-		 * under Settings, Compliance, so it cannot differ between forms on the
-		 * same site. Required is not editable either, since a consent nobody
-		 * has to give is not a consent.
+		 * Deliberately few. The wording comes from Settings, Compliance unless
+		 * this form sets its own; a form that does is listed on that screen so
+		 * overrides do not drift unnoticed. WPForms' own Required option is
+		 * not offered, because new fields start unrequired there; this field
+		 * starts required and the per-form "Optional" switch below is the only
+		 * way out of that.
 		 */
 		public function field_options( $field ) {
 
@@ -51,7 +53,7 @@ function pkwyc_consent_wpforms_register() {
 					'slug'    => 'pkwyc_notice',
 					'content' => '<p style="margin:0">' . sprintf(
 						/* translators: %s: link to the settings screen. */
-						esc_html__( 'The wording and links come from %s and are the same on every form.', 'pkwycompliance' ),
+						esc_html__( 'The links, and the wording unless set below, come from %s.', 'pkwycompliance' ),
 						'<a href="' . esc_url( admin_url( 'options-general.php?page=' . PKWYC_SLUG ) ) . '" target="_blank">' . esc_html__( 'Settings, Compliance', 'pkwycompliance' ) . '</a>'
 					) . '</p>',
 				)
@@ -59,6 +61,55 @@ function pkwyc_consent_wpforms_register() {
 
 			$this->field_option( 'label', $field );
 			$this->field_option( 'description', $field );
+
+			$optional = $this->field_element(
+				'checkbox',
+				$field,
+				array(
+					'slug'  => 'pkwyc_optional',
+					'value' => pkwyc_consent_is_required( isset( $field['pkwyc_optional'] ) ? $field['pkwyc_optional'] : null ) ? '0' : '1',
+					'desc'  => esc_html__( 'Optional', 'pkwycompliance' ),
+				),
+				false
+			);
+			$this->field_element(
+				'row',
+				$field,
+				array(
+					'slug'    => 'pkwyc_optional',
+					'content' => $optional . '<p class="note">' . esc_html__( 'Off: the form cannot be submitted unless the box is ticked. On: visitors may leave it unticked, and the entry records an empty value.', 'pkwycompliance' ) . '</p>',
+				)
+			);
+
+			$wording_label = $this->field_element(
+				'label',
+				$field,
+				array(
+					'slug'    => 'pkwyc_wording',
+					'value'   => esc_html__( 'Custom wording', 'pkwycompliance' ),
+					'tooltip' => esc_html__( 'Leave blank to use the site wording. {company}, {privacy} and {terms} work here too, and the links are added if left out.', 'pkwycompliance' ),
+				),
+				false
+			);
+			$wording_input = $this->field_element(
+				'textarea',
+				$field,
+				array(
+					'slug'  => 'pkwyc_wording',
+					'value' => isset( $field['pkwyc_wording'] ) ? $field['pkwyc_wording'] : '',
+					'rows'  => 5,
+				),
+				false
+			);
+			$this->field_element(
+				'row',
+				$field,
+				array(
+					'slug'    => 'pkwyc_wording',
+					'content' => $wording_label . $wording_input,
+				)
+			);
+
 			$this->field_option( 'basic-options', $field, array( 'markup' => 'close' ) );
 
 			$this->field_option( 'advanced-options', $field, array( 'markup' => 'open' ) );
@@ -68,13 +119,13 @@ function pkwyc_consent_wpforms_register() {
 
 		public function field_preview( $field ) {
 
-			$settings = pkwyc_settings();
+			$settings = pkwyc_consent_wpforms_settings( $field );
 			$wording  = pkwyc_consent_wording_html( $settings );
 
 			$this->field_preview_option( 'label', $field );
 
 			if ( $wording === '' ) {
-				echo '<p><em>' . esc_html__( 'Not configured. Set the Privacy Policy URL, the Terms URL and the wording under Settings, Compliance. Until then this form cannot be submitted.', 'pkwycompliance' ) . '</em></p>';
+				echo '<p><em>' . esc_html__( 'Not configured. Set the Privacy Policy URL and the wording under Settings, Compliance (and a Terms URL if the wording uses {terms}). Until then this form cannot be submitted.', 'pkwycompliance' ) . '</em></p>';
 				return;
 			}
 
@@ -83,7 +134,7 @@ function pkwyc_consent_wpforms_register() {
 
 		public function field_display( $field, $deprecated, $form_data ) {
 
-			$settings = pkwyc_settings();
+			$settings = pkwyc_consent_wpforms_settings( $field );
 			$wording  = pkwyc_consent_wording_html( $settings );
 
 			/*
@@ -94,33 +145,42 @@ function pkwyc_consent_wpforms_register() {
 			if ( $wording === '' ) {
 				echo '<em>' . esc_html__( 'This form cannot be submitted at this time.', 'pkwycompliance' ) . '</em>';
 				if ( current_user_can( 'manage_options' ) ) {
-					echo ' <em>' . esc_html__( 'Admin: set the Privacy Policy URL, Terms URL and wording under Settings, Compliance.', 'pkwycompliance' ) . '</em>';
+					echo ' <em>' . esc_html__( 'Admin: set the Privacy Policy URL and wording under Settings, Compliance, and a Terms URL if the wording uses {terms}.', 'pkwycompliance' ) . '</em>';
 				}
 				return;
 			}
 
-			$primary = $field['properties']['inputs']['primary'];
+			$primary   = $field['properties']['inputs']['primary'];
+			$mirror_id = $primary['id'];
+			$box_id    = $mirror_id . '-box';
 
+			/*
+			 * Conditional logic in the browser reads a text-like field's value
+			 * from the element with WPForms' own id. A checkbox's value is
+			 * "agreed" whether or not it is ticked, so that id goes on an
+			 * unnamed hidden mirror holding "agreed" or "", kept current by the
+			 * box's own change handler, which runs before WPForms' delegated
+			 * one. The box keeps its name and value, so submission does not
+			 * depend on the mirror or on JavaScript at all. Never pre-ticked,
+			 * so both start empty.
+			 */
 			printf(
-				'<label><input type="checkbox" %s value="agreed"> %s</label>',
-				wpforms_html_attributes( $primary['id'], $primary['class'], $primary['data'], $primary['attr'] ),
-				wp_kses_post( $wording )
+				'<label><input type="checkbox" %1$s value="agreed" onchange="%2$s"> %3$s</label><input type="hidden" id="%4$s" value="">',
+				wpforms_html_attributes( $box_id, $primary['class'], $primary['data'], $primary['attr'] ),
+				esc_attr( "var m=document.getElementById('" . esc_js( $mirror_id ) . "');if(m){m.value=this.checked?'agreed':'';}" ),
+				wp_kses_post( $wording ),
+				esc_attr( $mirror_id )
 			);
 		}
 
 		public function validate( $field_id, $field_submit, $form_data ) {
 
-			$settings = pkwyc_settings();
+			$field    = isset( $form_data['fields'][ $field_id ] ) ? $form_data['fields'][ $field_id ] : array();
+			$required = pkwyc_consent_is_required( isset( $field['pkwyc_optional'] ) ? $field['pkwyc_optional'] : null );
+			$error    = pkwyc_consent_validation_error( pkwyc_consent_wpforms_settings( $field ), $required, $field_submit );
 
-			if ( ! pkwyc_consent_is_configured( $settings ) ) {
-				wpforms()->obj( 'process' )->errors[ $form_data['id'] ][ $field_id ] =
-					esc_html__( 'This form cannot be submitted at this time.', 'pkwycompliance' );
-				return;
-			}
-
-			if ( pkwyc_consent_normalise_value( $field_submit ) !== 'agreed' ) {
-				wpforms()->obj( 'process' )->errors[ $form_data['id'] ][ $field_id ] =
-					esc_html__( 'You must agree to continue.', 'pkwycompliance' );
+			if ( $error !== '' ) {
+				wpforms()->obj( 'process' )->errors[ $form_data['id'] ][ $field_id ] = pkwyc_consent_error_message( $error );
 			}
 		}
 
@@ -141,6 +201,58 @@ function pkwyc_consent_wpforms_register() {
 
 	new PKWYC_WPForms_Consent_Field();
 }
+
+/**
+ * The settings as this field sees them, with its custom wording applied.
+ */
+function pkwyc_consent_wpforms_settings( $field ) {
+	return pkwyc_consent_effective_settings( pkwyc_settings(), isset( $field['pkwyc_wording'] ) ? $field['pkwyc_wording'] : '' );
+}
+
+/**
+ * WPForms forms whose consent field carries custom wording, for the settings
+ * screen.
+ */
+function pkwyc_consent_wpforms_overrides( $found ) {
+
+	if ( ! function_exists( 'wpforms' ) || ! function_exists( 'wpforms_decode' ) ) {
+		return $found;
+	}
+
+	$forms = wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) );
+
+	foreach ( (array) $forms as $form ) {
+		$data = wpforms_decode( $form->post_content );
+		if ( empty( $data['fields'] ) ) {
+			continue;
+		}
+		foreach ( $data['fields'] as $field ) {
+			if ( isset( $field['type'] ) && $field['type'] === 'pkwyc_consent'
+				&& isset( $field['pkwyc_wording'] ) && trim( (string) $field['pkwyc_wording'] ) !== '' ) {
+				$found[] = array(
+					'platform' => 'WPForms',
+					'title'    => $form->post_title,
+					'edit_url' => admin_url( 'admin.php?page=wpforms-builder&view=fields&form_id=' . absint( $form->ID ) ),
+					'wording'  => $field['pkwyc_wording'],
+				);
+				break;
+			}
+		}
+	}
+
+	return $found;
+}
+add_filter( 'pkwyc_consent_overrides', 'pkwyc_consent_wpforms_overrides' );
+
+/**
+ * Let the consent field drive conditional logic: Mailchimp connections,
+ * notifications, confirmations, and showing or hiding other fields. It joins as
+ * a text-like field, so a rule reads "Consent is not empty" (ticked) or
+ * "Consent is empty" (not ticked). Server side the value is the one format()
+ * stored; in the browser it is the hidden mirror written in field_display().
+ */
+add_filter( 'wpforms_get_conditional_logic_form_fields_supported', 'pkwyc_consent_add_conditional_type' );
+add_filter( 'wpforms_conditional_logic_core_get_text_based_fields', 'pkwyc_consent_add_conditional_type' );
 
 /**
  * Keep one instance per form.

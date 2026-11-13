@@ -73,7 +73,7 @@ function pkwyc_settings_page() {
 		<?php if ( ! $configured ) : ?>
 			<div class="notice notice-error inline">
 				<p><strong><?php esc_html_e( 'The consent field is not usable yet.', 'pkwycompliance' ); ?></strong>
-				<?php esc_html_e( 'Until the Privacy Policy URL, the Terms URL and the wording are all filled in, any form carrying the consent field will refuse to submit. That is deliberate: it is better than asking somebody to agree to documents they cannot open.', 'pkwycompliance' ); ?></p>
+				<?php esc_html_e( 'Until the Privacy Policy URL and the wording are filled in, any form carrying the consent field will refuse to submit. The Terms URL is optional, but wording that uses {terms} needs it. That is deliberate: it is better than asking somebody to agree to documents they cannot open.', 'pkwycompliance' ); ?></p>
 			</div>
 		<?php endif; ?>
 
@@ -82,7 +82,7 @@ function pkwyc_settings_page() {
 
 			<h2><?php esc_html_e( 'Form consent field', 'pkwycompliance' ); ?></h2>
 			<p class="description" style="max-width:40em">
-				<?php esc_html_e( 'This wording appears beside the consent checkbox on every form that uses the field. It is held here, not on the form, so it cannot drift from one form to another.', 'pkwycompliance' ); ?>
+				<?php esc_html_e( 'This wording appears beside the consent checkbox on every form that uses the field, unless that form sets custom wording in the field options. The links always come from here. Forms with custom wording are listed below so they do not drift unnoticed.', 'pkwycompliance' ); ?>
 			</p>
 
 			<table class="form-table" role="presentation">
@@ -97,7 +97,8 @@ function pkwyc_settings_page() {
 				</tr>
 				<tr>
 					<th scope="row"><label for="pkwyc_terms"><?php esc_html_e( 'Terms URL', 'pkwycompliance' ); ?></label></th>
-					<td><input name="<?php echo esc_attr( PKWYC_OPTION ); ?>[terms_url]" id="pkwyc_terms" type="url" class="regular-text code" value="<?php echo esc_attr( $s['terms_url'] ); ?>" placeholder="https://"></td>
+					<td><input name="<?php echo esc_attr( PKWYC_OPTION ); ?>[terms_url]" id="pkwyc_terms" type="url" class="regular-text code" value="<?php echo esc_attr( $s['terms_url'] ); ?>" placeholder="https://">
+					<p class="description"><?php esc_html_e( 'Optional. Leave blank if the site has no terms page, and take {terms} out of the wording.', 'pkwycompliance' ); ?></p></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="pkwyc_wording"><?php esc_html_e( 'Consent wording', 'pkwycompliance' ); ?></label></th>
@@ -120,6 +121,28 @@ function pkwyc_settings_page() {
 
 			<?php submit_button(); ?>
 		</form>
+
+		<h2><?php esc_html_e( 'Forms with custom wording', 'pkwycompliance' ); ?></h2>
+		<?php
+		$overrides = apply_filters( 'pkwyc_consent_overrides', array() );
+
+		if ( empty( $overrides ) ) {
+			echo '<p>' . esc_html__( 'None. Every consent field uses the wording above.', 'pkwycompliance' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped" style="max-width:60em"><thead><tr><th>' . esc_html__( 'Form', 'pkwycompliance' ) . '</th><th>' . esc_html__( 'Wording shown', 'pkwycompliance' ) . '</th></tr></thead><tbody>';
+			foreach ( $overrides as $o ) {
+				$shown = pkwyc_consent_wording_html( pkwyc_consent_effective_settings( $s, $o['wording'] ) );
+				printf(
+					'<tr><td><a href="%s">%s</a><br><span class="description">%s</span></td><td>%s</td></tr>',
+					esc_url( $o['edit_url'] ),
+					esc_html( $o['title'] ),
+					esc_html( $o['platform'] ),
+					$shown !== '' ? wp_kses_post( $shown ) : '<em>' . esc_html__( 'Not usable until the URLs are filled in.', 'pkwycompliance' ) . '</em>'
+				);
+			}
+			echo '</tbody></table>';
+		}
+		?>
 	</div>
 	<?php
 }

@@ -3,10 +3,11 @@
  * Gravity Forms adapter for the consent field.
  *
  * Carries over the defences from an earlier single-site version of this field
- * that has been in production for some time: one instance per form, enforced
- * defaults, never pre-ticked, and a stored value that is only ever "agreed" or
- * empty. What changed is that the wording is read from this plugin's settings
- * rather than hardcoded, so it matches what WPForms shows on the same site.
+ * that has been in production for some time: one instance per form, never
+ * pre-ticked, and a stored value that is only ever "agreed" or empty. What
+ * changed is that the wording is read from this plugin's settings rather than
+ * hardcoded, so it matches what WPForms shows on the same site, and that
+ * Required is a per-form choice rather than forced on.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -43,6 +44,15 @@ function pkwyc_consent_gf_register() {
 			);
 		}
 
+		/**
+		 * Let other fields, notifications and feeds depend on the answer.
+		 * The value is "agreed" when ticked and empty otherwise, so a rule
+		 * reads "Consent is agreed".
+		 */
+		public function is_conditional_logic_supported() {
+			return true;
+		}
+
 		public function get_form_editor_field_icon() {
 			return 'gform-icon--check-box';
 		}
@@ -54,6 +64,7 @@ function pkwyc_consent_gf_register() {
 				'label_setting',
 				'label_placement_setting',
 				'description_setting',
+				'pkwyc_wording_setting',
 				'css_class_setting',
 				'visibility_setting',
 				'rules_setting',
@@ -66,7 +77,7 @@ function pkwyc_consent_gf_register() {
 		public function get_form_editor_inline_script_on_page_render() {
 
 			$script  = 'window.fieldSettings = window.fieldSettings || {};';
-			$script .= 'window.fieldSettings["pkwyc_consent"] = ".conditional_logic_field_setting,.error_message_setting,.label_setting,.label_placement_setting,.description_setting,.css_class_setting,.visibility_setting,.rules_setting";';
+			$script .= 'window.fieldSettings["pkwyc_consent"] = ".conditional_logic_field_setting,.error_message_setting,.label_setting,.label_placement_setting,.description_setting,.pkwyc_wording_setting,.css_class_setting,.visibility_setting,.rules_setting";';
 
 			$script .= 'gform.addFilter("gform_form_editor_can_field_be_added", function(canAdd, type){'
 				. 'if(type==="pkwyc_consent"){var has=false;jQuery("#gform_fields li").each(function(){if(jQuery(this).attr("data-type")==="pkwyc_consent"){has=true;}});return !has;}return canAdd;});';
@@ -75,20 +86,30 @@ function pkwyc_consent_gf_register() {
 				. 'if(field.type==="pkwyc_consent"){field.label="Consent";field.isRequired=true;field.labelPlacement="hidden_label";}'
 				. 'return field;});';
 
+			$script .= 'jQuery(document).on("gform_load_field_settings", function(event, field){'
+				. 'jQuery("#pkwyc_wording").val(field.pkwycWording || "");});';
+
 			return $script;
+		}
+
+		/**
+		 * The site settings with this form's custom wording applied.
+		 */
+		public function pkwyc_settings() {
+			return pkwyc_consent_effective_settings( pkwyc_settings(), isset( $this->pkwycWording ) ? $this->pkwycWording : '' );
 		}
 
 		public function get_field_input( $form, $value = '', $entry = null ) {
 
 			$is_editor = GFCommon::is_form_editor();
-			$settings  = pkwyc_settings();
+			$settings  = $this->pkwyc_settings();
 			$wording   = pkwyc_consent_wording_html( $settings );
 
 			// Fail closed, exactly as the WPForms side does.
 			if ( $wording === '' ) {
 				$message = esc_html__( 'This form cannot be submitted at this time.', 'pkwycompliance' );
 				if ( $is_editor || current_user_can( 'manage_options' ) ) {
-					$message .= ' ' . esc_html__( 'Admin: set the Privacy Policy URL, Terms URL and wording under Settings, Compliance.', 'pkwycompliance' );
+					$message .= ' ' . esc_html__( 'Admin: set the Privacy Policy URL and wording under Settings, Compliance, and a Terms URL if the wording uses {terms}.', 'pkwycompliance' );
 				}
 				return '<div class="ginput_container ginput_container_consent"><em>' . $message . '</em></div>';
 			}
@@ -118,17 +139,11 @@ function pkwyc_consent_gf_register() {
 
 		public function validate( $value, $form ) {
 
-			$settings = pkwyc_settings();
+			$error = pkwyc_consent_validation_error( $this->pkwyc_settings(), (bool) $this->isRequired, $value );
 
-			if ( ! pkwyc_consent_is_configured( $settings ) ) {
+			if ( $error !== '' ) {
 				$this->failed_validation  = true;
-				$this->validation_message = esc_html__( 'This form cannot be submitted at this time.', 'pkwycompliance' );
-				return;
-			}
-
-			if ( $this->isRequired && pkwyc_consent_normalise_value( $value ) !== 'agreed' ) {
-				$this->failed_validation  = true;
-				$this->validation_message = esc_html__( 'You must agree to continue.', 'pkwycompliance' );
+				$this->validation_message = pkwyc_consent_error_message( $error );
 			}
 		}
 
@@ -145,7 +160,62 @@ function pkwyc_consent_gf_register() {
 }
 
 /**
- * Re-pin the defaults at render, in case a form was saved with them changed.
+ * The Custom wording box in the field editor. Blank means the site wording.
+ */
+function pkwyc_consent_gf_wording_setting( $position, $form_id ) {
+
+	if ( $position !== 50 ) {
+		return;
+	}
+
+	?>
+	<li class="pkwyc_wording_setting field_setting">
+		<label for="pkwyc_wording" class="section_label"><?php esc_html_e( 'Custom wording', 'pkwycompliance' ); ?></label>
+		<textarea id="pkwyc_wording" class="fieldwidth-3 fieldheight-2" oninput="SetFieldProperty('pkwycWording', this.value);"></textarea>
+		<p class="description"><?php esc_html_e( 'Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out.', 'pkwycompliance' ); ?></p>
+	</li>
+	<?php
+}
+add_action( 'gform_field_standard_settings', 'pkwyc_consent_gf_wording_setting', 10, 2 );
+
+/**
+ * Gravity Forms forms whose consent field carries custom wording, for the
+ * settings screen.
+ */
+function pkwyc_consent_gf_overrides( $found ) {
+
+	if ( ! class_exists( 'GFAPI' ) ) {
+		return $found;
+	}
+
+	foreach ( (array) GFAPI::get_forms() as $form ) {
+		if ( empty( $form['fields'] ) ) {
+			continue;
+		}
+		foreach ( $form['fields'] as $field ) {
+			if ( isset( $field->type ) && $field->type === 'pkwyc_consent'
+				&& isset( $field->pkwycWording ) && trim( (string) $field->pkwycWording ) !== '' ) {
+				$found[] = array(
+					'platform' => 'Gravity Forms',
+					'title'    => rgar( $form, 'title' ),
+					'edit_url' => admin_url( 'admin.php?page=gf_edit_forms&id=' . absint( rgar( $form, 'id' ) ) ),
+					'wording'  => $field->pkwycWording,
+				);
+				break;
+			}
+		}
+	}
+
+	return $found;
+}
+add_filter( 'pkwyc_consent_overrides', 'pkwyc_consent_gf_overrides' );
+
+/**
+ * Re-pin the label placement at render, in case a form was saved with it changed.
+ *
+ * Required is deliberately not re-pinned. It starts on for a new field (see the
+ * editor defaults above) and is a per-form choice from then on, made with
+ * Gravity Forms' own Required checkbox.
  */
 function pkwyc_consent_gf_enforce( $form ) {
 
@@ -155,7 +225,6 @@ function pkwyc_consent_gf_enforce( $form ) {
 
 	foreach ( $form['fields'] as $field ) {
 		if ( isset( $field->type ) && $field->type === 'pkwyc_consent' ) {
-			$field->isRequired     = true;
 			$field->labelPlacement = 'hidden_label';
 		}
 	}

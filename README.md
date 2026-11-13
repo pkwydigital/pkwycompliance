@@ -6,17 +6,21 @@ The first component adds a marketing consent field to **WPForms** and **Gravity 
 
 ## Why it exists
 
-Consent text copied onto each form drifts. One form says something slightly different from the next, nobody notices, and the record of what somebody agreed to becomes unreliable. This keeps the wording, the Privacy Policy link and the Terms link in a single setting, and every form that uses the field shows the same thing.
+Consent text copied onto each form drifts. One form says something slightly different from the next, nobody notices, and the record of what somebody agreed to becomes unreliable. This keeps the wording, the Privacy Policy link and the Terms link in a single setting, and every form that uses the field shows the same thing by default.
 
 ## Install
 
 Download the latest release and install it like any other plugin, or drop the folder in `wp-content/plugins/pkwycompliance`.
 
-Then set the wording under **Settings, Compliance**. Until the Privacy Policy URL, the Terms URL and the wording are all filled in, any form carrying the field will refuse to submit. That is deliberate: collecting agreement to documents a visitor cannot open is worse than collecting nothing.
+Then set the wording under **Settings, Compliance**. Until the Privacy Policy URL and the wording are filled in, any form carrying the field will refuse to submit. The Terms URL is optional; leave it blank if the site has no terms page, but then the wording must not use {terms}. That is deliberate: collecting agreement to documents a visitor cannot open is worse than collecting nothing.
 
 ## Using the field
 
-Add **Consent** to a form from the field list, the same way as any other field. It is required by default and cannot be made optional, because an optional consent is not a consent. Only one per form; a second is ignored.
+Add **Consent** to a form from the field list, the same way as any other field. It is required by default, so the form cannot be submitted unless the box is ticked. To make it optional on one form, tick **Optional** in the field's options on WPForms, or untick **Required** on Gravity Forms. An optional box left unticked stores an empty value. Either way the field still refuses submission until the wording and links are set. Only one per form; a second is ignored.
+
+A form that needs different wording, for example an optional opt-in beside a required one elsewhere on the site, can set **Custom wording** in the field's options. Leave it blank to use the site wording. The links still come from the settings, and are added if the custom wording leaves them out. Every form with custom wording is listed under **Settings, Compliance**, so overrides stay visible.
+
+The field can drive conditional logic, so a Mailchimp connection, a notification, a confirmation or another field can depend on the answer. On WPForms, use **Consent is not empty** for ticked and **Consent is empty** for not ticked. On Gravity Forms, use **Consent is agreed**. Showing and hiding other fields works live in the browser as well as on submission.
 
 The stored value is `agreed` or empty, nothing else, whatever the request contains.
 
@@ -26,7 +30,7 @@ The stored value is `agreed` or empty, nothing else, whatever the request contai
 |---|---|
 | Company name | Substituted wherever `{company}` appears |
 | Privacy Policy URL | Linked from the wording |
-| Terms URL | Linked from the wording |
+| Terms URL | Optional. Linked from the wording when set |
 | Consent wording | The sentence shown beside the checkbox |
 
 Placeholders: `{company}`, `{privacy}`, `{terms}`. If the link placeholders are left out, the links are appended anyway.
