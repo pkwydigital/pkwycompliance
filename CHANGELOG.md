@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0
 
 - Admin notice on every admin screen when the consent field is not usable, linking to Settings, Compliance. Stronger when the Privacy Policy URL is missing, softer when only the site wording is the problem.
 - The settings screen, and the admin hint on an unusable form, now name the actual reason: missing Privacy Policy URL, blank wording, or wording that uses {terms} with no Terms URL.
