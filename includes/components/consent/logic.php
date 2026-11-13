@@ -38,19 +38,82 @@ function pkwyc_consent_setting( $settings, $key ) {
  * placeholder, so that also fails closed.
  */
 function pkwyc_consent_is_configured( $settings ) {
+	return pkwyc_consent_config_problem( $settings ) === '';
+}
 
-	foreach ( array( 'privacy_url', 'wording' ) as $key ) {
-		if ( pkwyc_consent_setting( $settings, $key ) === '' ) {
-			return false;
-		}
+/**
+ * Why the settings are not usable, or an empty string if they are.
+ *
+ * Returns the first reason that applies, in this order: 'no_privacy_url',
+ * 'no_wording', 'terms_without_url' (the wording names {terms} and there is no
+ * Terms URL). One reason, so a message can say exactly what to fix rather than
+ * listing every field.
+ */
+function pkwyc_consent_config_problem( $settings ) {
+
+	if ( pkwyc_consent_setting( $settings, 'privacy_url' ) === '' ) {
+		return 'no_privacy_url';
+	}
+
+	if ( pkwyc_consent_setting( $settings, 'wording' ) === '' ) {
+		return 'no_wording';
 	}
 
 	if ( pkwyc_consent_setting( $settings, 'terms_url' ) === ''
 		&& strpos( pkwyc_consent_setting( $settings, 'wording' ), '{terms}' ) !== false ) {
-		return false;
+		return 'terms_without_url';
 	}
 
-	return true;
+	return '';
+}
+
+/**
+ * The sentence that tells an admin what to fix, for a reason from
+ * pkwyc_consent_config_problem().
+ */
+function pkwyc_consent_config_problem_message( $problem ) {
+
+	switch ( $problem ) {
+		case 'no_privacy_url':
+			return esc_html__( 'The Privacy Policy URL is not set.', 'pkwycompliance' );
+		case 'no_wording':
+			return esc_html__( 'The consent wording is blank.', 'pkwycompliance' );
+		case 'terms_without_url':
+			return esc_html__( 'The wording uses {terms} but there is no Terms URL. Either add a Terms URL or take {terms} out of the wording.', 'pkwycompliance' );
+	}
+
+	return '';
+}
+
+/**
+ * Should admins be warned that the consent field is not usable, and how loudly?
+ *
+ * Returns 'strong', 'soft' or an empty string for no warning.
+ *
+ * Strong: no Privacy URL. Every consent field on the site refuses submission,
+ * custom wording or not, because the link always comes from the site settings.
+ *
+ * Soft: the Privacy URL is set but the site wording is not usable (blank, or
+ * naming {terms} with no Terms URL). Forms using the site wording refuse
+ * submission, but a site whose forms all carry their own custom wording may be
+ * working perfectly, so this is worded as a check rather than an alarm.
+ *
+ * Nothing when the kill switch is on: that has its own notice, and nothing is
+ * being enforced.
+ */
+function pkwyc_consent_notice_level( $settings, $disabled ) {
+
+	if ( $disabled ) {
+		return '';
+	}
+
+	$problem = pkwyc_consent_config_problem( $settings );
+
+	if ( $problem === '' ) {
+		return '';
+	}
+
+	return $problem === 'no_privacy_url' ? 'strong' : 'soft';
 }
 
 /**

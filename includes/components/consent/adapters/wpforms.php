@@ -154,7 +154,7 @@ function pkwyc_consent_wpforms_register() {
 			if ( $wording === '' ) {
 				echo '<em>' . esc_html__( 'This form cannot be submitted at this time.', 'pkwycompliance' ) . '</em>';
 				if ( current_user_can( 'manage_options' ) ) {
-					echo ' <em>' . esc_html__( 'Admin: set the Privacy Policy URL and wording under Settings, Compliance, and a Terms URL if the wording uses {terms}.', 'pkwycompliance' ) . '</em>';
+					echo ' <em>' . esc_html__( 'Admin:', 'pkwycompliance' ) . ' ' . esc_html( pkwyc_consent_config_problem_message( pkwyc_consent_config_problem( $settings ) ) ) . ' ' . esc_html__( 'See Settings, Compliance.', 'pkwycompliance' ) . '</em>';
 				}
 				return;
 			}

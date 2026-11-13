@@ -63,17 +63,26 @@ function pkwyc_settings_sanitize( $input ) {
 
 function pkwyc_settings_page() {
 
-	$s         = pkwyc_settings();
-	$configured = pkwyc_consent_is_configured( $s );
+	$s       = pkwyc_settings();
+	$problem = pkwyc_consent_config_problem( $s );
 
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Compliance', 'pkwycompliance' ); ?></h1>
 
-		<?php if ( ! $configured ) : ?>
+		<?php if ( $problem !== '' ) : ?>
 			<div class="notice notice-error inline">
 				<p><strong><?php esc_html_e( 'The consent field is not usable yet.', 'pkwycompliance' ); ?></strong>
-				<?php esc_html_e( 'Until the Privacy Policy URL and the wording are filled in, any form carrying the consent field will refuse to submit. The Terms URL is optional, but wording that uses {terms} needs it. That is deliberate: it is better than asking somebody to agree to documents they cannot open.', 'pkwycompliance' ); ?></p>
+				<?php echo esc_html( pkwyc_consent_config_problem_message( $problem ) ); ?></p>
+				<p><?php
+				if ( $problem === 'no_privacy_url' ) {
+					esc_html_e( 'Until it is set, every form carrying the consent field will refuse to submit, including forms with custom wording.', 'pkwycompliance' );
+				} else {
+					esc_html_e( 'Until it is fixed, forms using the site wording will refuse to submit. Forms with their own custom wording are not affected by this.', 'pkwycompliance' );
+				}
+				echo ' ';
+				esc_html_e( 'That is deliberate: it is better than asking somebody to agree to documents they cannot open.', 'pkwycompliance' );
+				?></p>
 			</div>
 		<?php endif; ?>
 
@@ -146,3 +155,52 @@ function pkwyc_settings_page() {
 	</div>
 	<?php
 }
+
+/**
+ * Warn admins on other screens when the consent field is not usable.
+ *
+ * The settings screen already says so, and the field fails closed, but a site
+ * with the plugin active and nothing configured would otherwise show no
+ * warning anywhere an admin is likely to look. Dismissing it hides it for that
+ * page load only; it comes back until the settings are fixed.
+ */
+function pkwyc_unconfigured_notice() {
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( $screen && $screen->id === 'settings_page_' . PKWYC_SLUG ) {
+		return;
+	}
+
+	$s     = pkwyc_settings();
+	$level = pkwyc_consent_notice_level( $s, pkwyc_is_disabled() );
+
+	if ( $level === '' ) {
+		return;
+	}
+
+	$link = sprintf(
+		'<a href="%s">%s</a>',
+		esc_url( admin_url( 'options-general.php?page=' . PKWYC_SLUG ) ),
+		esc_html__( 'Settings, Compliance', 'pkwycompliance' )
+	);
+
+	if ( $level === 'strong' ) {
+		$lead = esc_html__( 'PKWY Compliance is not set up.', 'pkwycompliance' );
+		$tail = esc_html__( 'Any form carrying the Consent field will refuse to submit until it is. Fix it under %s.', 'pkwycompliance' );
+	} else {
+		$lead = esc_html__( 'PKWY Compliance: the site consent wording is not usable.', 'pkwycompliance' );
+		$tail = esc_html__( 'Forms using the site wording will refuse to submit; forms with their own custom wording are not affected. Check it under %s.', 'pkwycompliance' );
+	}
+
+	printf(
+		'<div class="notice notice-warning is-dismissible pkwyc-unconfigured"><p><strong>%s</strong> %s %s</p></div>',
+		$lead,
+		esc_html( pkwyc_consent_config_problem_message( pkwyc_consent_config_problem( $s ) ) ),
+		sprintf( $tail, $link )
+	);
+}
+add_action( 'admin_notices', 'pkwyc_unconfigured_notice' );

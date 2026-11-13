@@ -97,6 +97,37 @@ pkwyc_assert( 'consent type added to list', pkwyc_consent_add_conditional_type( 
 pkwyc_assert( 'consent type not added twice', pkwyc_consent_add_conditional_type( array( 'text', 'pkwyc_consent' ) ), array( 'text', 'pkwyc_consent' ) );
 pkwyc_assert( 'non array list becomes a list', pkwyc_consent_add_conditional_type( null ), array( 'pkwyc_consent' ) );
 
+// --- why it is not usable, for the settings banner and the admin notice ---
+// One reason, the first that applies, so the message can name it exactly.
+pkwyc_assert( 'problem: none when configured',   pkwyc_consent_config_problem( $good ), '' );
+pkwyc_assert( 'problem: none for privacy only',  pkwyc_consent_config_problem( $noterms ), '' );
+pkwyc_assert( 'problem: privacy url missing',    pkwyc_consent_config_problem( array_merge( $good, array( 'privacy_url' => ' ' ) ) ), 'no_privacy_url' );
+pkwyc_assert( 'problem: privacy url wins over everything else',
+	pkwyc_consent_config_problem( array( 'privacy_url' => '', 'terms_url' => '', 'wording' => '' ) ), 'no_privacy_url' );
+pkwyc_assert( 'problem: wording missing',        pkwyc_consent_config_problem( array_merge( $good, array( 'wording' => '' ) ) ), 'no_wording' );
+// The case the old banner got wrong: privacy set, wording names {terms}, no terms url.
+pkwyc_assert( 'problem: terms placeholder without terms url',
+	pkwyc_consent_config_problem( array_merge( $good, array( 'terms_url' => '' ) ) ), 'terms_without_url' );
+pkwyc_assert( 'problem agrees with is_configured', pkwyc_consent_config_problem( array() ) !== '', ! pkwyc_consent_is_configured( array() ) );
+pkwyc_assert( 'problem message: privacy',  strpos( pkwyc_consent_config_problem_message( 'no_privacy_url' ), 'Privacy Policy URL' ) !== false, true );
+pkwyc_assert( 'problem message: wording',  strpos( pkwyc_consent_config_problem_message( 'no_wording' ), 'wording' ) !== false, true );
+pkwyc_assert( 'problem message: terms names the placeholder and the url',
+	strpos( pkwyc_consent_config_problem_message( 'terms_without_url' ), '{terms}' ) !== false
+	&& strpos( pkwyc_consent_config_problem_message( 'terms_without_url' ), 'Terms URL' ) !== false, true );
+pkwyc_assert( 'problem message: terms does not blame the privacy url',
+	strpos( pkwyc_consent_config_problem_message( 'terms_without_url' ), 'Privacy Policy URL' ), false );
+pkwyc_assert( 'problem message: none is empty', pkwyc_consent_config_problem_message( '' ), '' );
+
+// --- should the admin be warned, and how loudly -------------------------
+// No Privacy URL: nothing on the site can work, custom wording or not.
+// Site wording unusable: forms that use it refuse to submit, but a site whose
+// forms all carry custom wording may be fine, so the warning is softer.
+pkwyc_assert( 'notice: none when configured',          pkwyc_consent_notice_level( $good, false ), '' );
+pkwyc_assert( 'notice: strong without privacy url',    pkwyc_consent_notice_level( array_merge( $good, array( 'privacy_url' => '' ) ), false ), 'strong' );
+pkwyc_assert( 'notice: soft when wording is blank',    pkwyc_consent_notice_level( array_merge( $good, array( 'wording' => '' ) ), false ), 'soft' );
+pkwyc_assert( 'notice: soft when terms url missing',   pkwyc_consent_notice_level( array_merge( $good, array( 'terms_url' => '' ) ), false ), 'soft' );
+pkwyc_assert( 'notice: none when disabled',            pkwyc_consent_notice_level( array(), true ), '' );
+
 // --- the kill switch ----------------------------------------------------
 pkwyc_assert( 'enforcing by default', pkwyc_is_disabled(), false );
 define( 'PKWYC_DISABLE', true );

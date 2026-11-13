@@ -114,7 +114,7 @@ function pkwyc_consent_gf_register() {
 			if ( $wording === '' ) {
 				$message = esc_html__( 'This form cannot be submitted at this time.', 'pkwycompliance' );
 				if ( $is_editor || current_user_can( 'manage_options' ) ) {
-					$message .= ' ' . esc_html__( 'Admin: set the Privacy Policy URL and wording under Settings, Compliance, and a Terms URL if the wording uses {terms}.', 'pkwycompliance' );
+					$message .= ' ' . esc_html__( 'Admin:', 'pkwycompliance' ) . ' ' . esc_html( pkwyc_consent_config_problem_message( pkwyc_consent_config_problem( $settings ) ) ) . ' ' . esc_html__( 'See Settings, Compliance.', 'pkwycompliance' );
 				}
 				return '<div class="ginput_container ginput_container_consent"><em>' . $message . '</em></div>';
 			}

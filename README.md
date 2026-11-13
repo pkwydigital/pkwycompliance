@@ -14,6 +14,8 @@ Download the latest release and install it like any other plugin, or drop the fo
 
 Then set the wording under **Settings, Compliance**. Until the Privacy Policy URL and the wording are filled in, any form carrying the field will refuse to submit. The Terms URL is optional; leave it blank if the site has no terms page, but then the wording must not use {terms}. That is deliberate: collecting agreement to documents a visitor cannot open is worse than collecting nothing.
 
+Until that is done, administrators see a warning at the top of every admin screen, linking to the settings. It can be dismissed for the page being viewed but returns on the next one, until the settings are usable. With no Privacy Policy URL the warning says forms with the field will refuse to submit. With a Privacy Policy URL but site wording that is blank, or that uses {terms} with no Terms URL, it is softer, because forms carrying their own custom wording still work. The settings screen names the exact reason. No warning is shown while `PKWYC_DISABLE` is set, which has its own notice.
+
 ## Using the field
 
 Add **Consent** to a form from the field list, the same way as any other field. It is required by default, so the form cannot be submitted unless the box is ticked. To make it optional on one form, tick **Optional** in the field's options on WPForms, or untick **Required** on Gravity Forms. An optional box left unticked stores an empty value. Either way the field still refuses submission until the wording and links are set. Only one per form; a second is ignored.
@@ -48,6 +50,10 @@ define( 'PKWYC_DISABLE', true );         // stop it enforcing anything at all
 
 The second is the one to reach for if a release ever breaks form submission on a live site. It leaves the plugin installed and shows a warning in the admin so a disabled site does not look like a working one.
 
+## Uninstalling
+
+Deleting the plugin from the Plugins screen removes its settings (on every site of a multisite network) and its cached update check. Deactivating it removes nothing. Entries already collected by WPForms or Gravity Forms belong to those plugins and are left as they are.
+
 ## Development
 
 Pure logic lives in `includes/components/consent/logic.php` and `includes/updater.php`, with no WordPress dependency, so it is testable from a terminal:
@@ -55,6 +61,7 @@ Pure logic lives in `includes/components/consent/logic.php` and `includes/update
 ```bash
 php tests/test-consent.php
 php tests/test-updater.php
+php tests/test-uninstall.php
 ```
 
 Adapters translate that logic into each form plugin's API and hold no decisions of their own.
