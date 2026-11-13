@@ -10,7 +10,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'wpforms_loaded', 'pkwyc_consent_wpforms_register' );
+/*
+ * Components load on plugins_loaded at priority 20, and WPForms fires
+ * wpforms_loaded earlier in that same plugins_loaded run, so by the time this
+ * file is read the hook has usually been and gone. Register now if it has.
+ */
+if ( did_action( 'wpforms_loaded' ) ) {
+	pkwyc_consent_wpforms_register();
+} else {
+	add_action( 'wpforms_loaded', 'pkwyc_consent_wpforms_register' );
+}
 
 function pkwyc_consent_wpforms_register() {
 

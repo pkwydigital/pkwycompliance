@@ -14,7 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'gform_loaded', 'pkwyc_consent_gf_register', 5 );
+// Same timing trap as the WPForms adapter: gform_loaded may already have fired.
+if ( did_action( 'gform_loaded' ) ) {
+	pkwyc_consent_gf_register();
+} else {
+	add_action( 'gform_loaded', 'pkwyc_consent_gf_register', 5 );
+}
 
 function pkwyc_consent_gf_register() {
 
