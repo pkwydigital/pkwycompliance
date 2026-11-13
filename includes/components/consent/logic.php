@@ -235,6 +235,26 @@ function pkwyc_consent_error_message( $error ) {
 }
 
 /**
+ * The message for a consent box that is required and was not ticked.
+ *
+ * Uses the form's own error message when it has one, otherwise the plugin's.
+ * Unconfigured settings win over both: the visitor cannot fix that by ticking
+ * the box, so telling them to tick it would be wrong.
+ */
+function pkwyc_consent_required_message( $settings, $custom ) {
+
+	if ( ! pkwyc_consent_is_configured( $settings ) ) {
+		return pkwyc_consent_error_message( 'unconfigured' );
+	}
+
+	if ( is_scalar( $custom ) && trim( (string) $custom ) !== '' ) {
+		return trim( (string) $custom );
+	}
+
+	return pkwyc_consent_error_message( 'not_agreed' );
+}
+
+/**
  * The settings as one form sees them, with that form's custom wording applied.
  *
  * The override replaces the wording and nothing else. The links still come

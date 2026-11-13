@@ -42,10 +42,16 @@ require_once PKWYC_PATH . 'includes/components/consent/logic.php';
  */
 function pkwyc_components() {
 
+	/*
+	 * Plain strings, not __(): this runs on plugins_loaded, before init, and
+	 * translating there makes WordPress 6.7+ log a "translation loading was
+	 * triggered too early" notice on every request. Anything that displays
+	 * these should translate them at display time.
+	 */
 	$components = array(
 		'consent' => array(
-			'label'       => __( 'Form consent field', 'pkwycompliance' ),
-			'description' => __( 'Adds a consent checkbox to WPForms and Gravity Forms, with the wording held centrally.', 'pkwycompliance' ),
+			'label'       => 'Form consent field',
+			'description' => 'Adds a consent checkbox to WPForms and Gravity Forms, with the wording held centrally.',
 			'path'        => 'includes/components/consent/consent.php',
 		),
 	);

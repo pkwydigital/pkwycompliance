@@ -18,7 +18,7 @@ Until that is done, administrators see a warning at the top of every admin scree
 
 ## Using the field
 
-Add **Consent** to a form from the field list, the same way as any other field. It is required by default, so the form cannot be submitted unless the box is ticked. To make it optional on one form, tick **Optional** in the field's options on WPForms, or untick **Required** on Gravity Forms. An optional box left unticked stores an empty value. Either way the field still refuses submission until the wording and links are set. Only one per form; a second is ignored.
+Add **Consent** to a form from the field list, the same way as any other field. It is required by default, so the form cannot be submitted unless the box is ticked. To make it optional on one form, tick **Optional** in the field's options on WPForms, or untick **Required** on Gravity Forms. An optional box left unticked stores an empty value. Either way the field still refuses submission until the wording and links are set. Only one per form: on WPForms a second is ignored when the form is shown; on Gravity Forms the form editor will not add a second one (a form built through the API or an import can still carry two).
 
 A form that needs different wording, for example an optional opt-in beside a required one elsewhere on the site, can set **Custom wording** in the field's options. Leave it blank to use the site wording. The links still come from the settings, and are added if the custom wording leaves them out. Every form with custom wording is listed under **Settings, Compliance**, so overrides stay visible.
 
@@ -62,6 +62,7 @@ Pure logic lives in `includes/components/consent/logic.php` and `includes/update
 php tests/test-consent.php
 php tests/test-updater.php
 php tests/test-uninstall.php
+php tests/test-gf-signatures.php
 ```
 
 Adapters translate that logic into each form plugin's API and hold no decisions of their own.

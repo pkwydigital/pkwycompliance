@@ -97,6 +97,16 @@ pkwyc_assert( 'consent type added to list', pkwyc_consent_add_conditional_type( 
 pkwyc_assert( 'consent type not added twice', pkwyc_consent_add_conditional_type( array( 'text', 'pkwyc_consent' ) ), array( 'text', 'pkwyc_consent' ) );
 pkwyc_assert( 'non array list becomes a list', pkwyc_consent_add_conditional_type( null ), array( 'pkwyc_consent' ) );
 
+// --- the message for a required box left unticked ----------------------
+// Gravity Forms runs its own "required" check before the field's validate()
+// and shows the field's Error Message setting, or "This field is required."
+// The adapter feeds it this instead, so both platforms say the same thing.
+pkwyc_assert( 'required message: default',          pkwyc_consent_required_message( $good, '' ), 'You must agree to continue.' );
+pkwyc_assert( 'required message: form custom kept', pkwyc_consent_required_message( $good, 'Please tick the box.' ), 'Please tick the box.' );
+pkwyc_assert( 'required message: blank custom is default', pkwyc_consent_required_message( $good, "  " ), 'You must agree to continue.' );
+pkwyc_assert( 'required message: unconfigured beats custom',
+	pkwyc_consent_required_message( array_merge( $good, array( 'privacy_url' => '' ) ), 'Please tick the box.' ), 'This form cannot be submitted at this time.' );
+
 // --- why it is not usable, for the settings banner and the admin notice ---
 // One reason, the first that applies, so the message can name it exactly.
 pkwyc_assert( 'problem: none when configured',   pkwyc_consent_config_problem( $good ), '' );

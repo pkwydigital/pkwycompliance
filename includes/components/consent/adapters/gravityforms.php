@@ -134,8 +134,15 @@ function pkwyc_consent_gf_register() {
 			);
 		}
 
-		public function get_field_label( $force_frontend_label, $value = '', $form = null ) {
-			return GFCommon::is_form_editor() ? parent::get_field_label( $force_frontend_label, $value, $form ) : '';
+		/*
+		 * Signatures below must stay compatible with GF_Field in every Gravity
+		 * Forms version a site might run. A child method that drops a default
+		 * the parent has is a fatal error the moment Gravity Forms loads, and
+		 * it takes the whole site down, not just the form. Gravity Forms 3.x
+		 * declares get_field_label( $force_frontend_label = true, $value = '' ).
+		 */
+		public function get_field_label( $force_frontend_label = true, $value = '' ) {
+			return GFCommon::is_form_editor() ? parent::get_field_label( $force_frontend_label, $value ) : '';
 		}
 
 		public function get_value_submission( $field_values, $get_from_post_global = false ) {
@@ -148,11 +155,11 @@ function pkwyc_consent_gf_register() {
 
 			if ( $error !== '' ) {
 				$this->failed_validation  = true;
-				$this->validation_message = pkwyc_consent_error_message( $error );
+				$this->validation_message = pkwyc_consent_required_message( $this->pkwyc_settings(), $this->errorMessage );
 			}
 		}
 
-		public function get_value_entry_detail( $value, $currency = '', $use_text = false, $format = 'html', $media = 'screen' ) {
+		public function get_value_entry_detail( $value, $entry = array(), $use_text = false, $format = 'html', $media = 'screen' ) {
 			return $value;
 		}
 
@@ -238,6 +245,33 @@ function pkwyc_consent_gf_enforce( $form ) {
 }
 add_filter( 'gform_pre_render', 'pkwyc_consent_gf_enforce' );
 add_filter( 'gform_pre_validation', 'pkwyc_consent_gf_enforce' );
+
+/**
+ * Give Gravity Forms' own "required" check the plugin's message.
+ *
+ * Gravity Forms decides a required field is empty before it ever calls the
+ * field's validate(), and then shows the field's Error Message setting or its
+ * generic "This field is required." So an unticked box never reached the
+ * plugin's wording, and with the settings cleared it told the visitor to tick
+ * a box that would not have helped. Setting the error message for this
+ * submission only (nothing is saved) puts the plugin's message in its place,
+ * while a form's own Error Message is still respected.
+ */
+function pkwyc_consent_gf_required_message( $form ) {
+
+	if ( empty( $form['fields'] ) ) {
+		return $form;
+	}
+
+	foreach ( $form['fields'] as $field ) {
+		if ( isset( $field->type ) && $field->type === 'pkwyc_consent' && method_exists( $field, 'pkwyc_settings' ) ) {
+			$field->errorMessage = pkwyc_consent_required_message( $field->pkwyc_settings(), $field->errorMessage );
+		}
+	}
+
+	return $form;
+}
+add_filter( 'gform_pre_validation', 'pkwyc_consent_gf_required_message' );
 
 /**
  * Only ever store "agreed" or empty.
