@@ -3,7 +3,7 @@
  * Plugin Name: PKWY Compliance
  * Plugin URI:  https://github.com/pkwydigital/pkwycompliance
  * Description: Compliance building blocks for Parkway Digital client sites. The first component adds a marketing consent field to WPForms and Gravity Forms, with the legal wording held in one place rather than retyped per form.
- * Version:     1.3.0
+ * Version:     1.3.1
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Text Domain: pkwycompliance
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'PKWYC_VERSION', '1.3.0' );
+define( 'PKWYC_VERSION', '1.3.1' );
 define( 'PKWYC_SLUG', 'pkwycompliance' );
 define( 'PKWYC_FILE', __FILE__ );
 define( 'PKWYC_BASENAME', plugin_basename( __FILE__ ) );

@@ -443,7 +443,7 @@ function pkwyc_consent_wpforms_entry_box( $entry, $form_data ) {
 	$json = ! empty( $meta[0]->data ) ? $meta[0]->data : '';
 
 	echo '<div class="postbox pkwyc-consent-record"><div class="postbox-header"><h2 class="hndle"><span>' . esc_html__( 'Consent wording', 'pkwycompliance' ) . '</span></h2></div><div class="inside">'
-		. pkwyc_consent_record_html( $json ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+		. pkwyc_consent_record_padded_html( $json ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 		. '</div></div>';
 }
 add_action( 'wpforms_entry_details_content', 'pkwyc_consent_wpforms_entry_box', 10, 2 );

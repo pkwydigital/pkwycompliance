@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- WPForms entry screen: the consent wording box now has inner padding, so the text no longer sits against the box edge.
+
 ## 1.3.0
 
 - Settings, Compliance: a "Forms with the Consent field" table lists every form using the field and, for each Mailchimp connection (WPForms) or active Mailchimp feed (Gravity Forms), whether it only subscribes people who ticked the box. Adding the box changes nothing in Mailchimp by itself; connections that would still subscribe everyone are shown in red.

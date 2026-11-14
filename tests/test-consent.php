@@ -215,4 +215,9 @@ pkwyc_assert( 'gf hint does not name the wpforms rule', strpos( $gfh, 'not empty
 pkwyc_assert( 'gf hint says the box does nothing alone', strpos( $gfh, 'does nothing to Mailchimp on its own' ) !== false, true );
 pkwyc_assert( 'wpforms is the default platform', pkwyc_consent_mailchimp_hint(), $wpf );
 
+// The WPForms entry screen zeroes a box's inner padding, so the record brings its own.
+$padded = pkwyc_consent_record_padded_html( '' );
+pkwyc_assert( 'padded record: wrapped in a padded block', strpos( $padded, '<div class="pkwyc-consent-record-body" style="padding:' ) === 0, true );
+pkwyc_assert( 'padded record: carries the record itself', strpos( $padded, pkwyc_consent_record_html( '' ) ) !== false, true );
+
 pkwyc_results();

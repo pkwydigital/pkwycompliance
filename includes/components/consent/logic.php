@@ -409,6 +409,17 @@ function pkwyc_consent_record_html( $json ) {
 }
 
 /**
+ * The record wrapped with its own padding, for screens (the WPForms entry
+ * screen) that zero a box's inner padding and expect content to bring its own.
+ *
+ * @param string $json The stored record.
+ * @return string HTML, escaped.
+ */
+function pkwyc_consent_record_padded_html( $json ) {
+	return '<div class="pkwyc-consent-record-body" style="padding:6px 12px 2px">' . pkwyc_consent_record_html( $json ) . '</div>';
+}
+
+/**
  * With the emergency switch on, let Gravity Forms submit forms that carry a
  * Consent field.
  *
