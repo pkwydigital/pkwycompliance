@@ -1,0 +1,412 @@
+# Copyright (C) 2026 Parkway Digital
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: PKWY Compliance 1.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-14T03:24:33+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: pkwycompliance\n"
+
+#. Plugin Name of the plugin
+#: pkwycompliance.php
+msgid "PKWY Compliance"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: pkwycompliance.php
+msgid "https://github.com/pkwydigital/pkwycompliance"
+msgstr ""
+
+#. Description of the plugin
+#: pkwycompliance.php
+msgid "Compliance building blocks for Parkway Digital client sites. The first component adds a marketing consent field to WPForms and Gravity Forms, with the legal wording held in one place rather than retyped per form."
+msgstr ""
+
+#. Author of the plugin
+#: pkwycompliance.php
+msgid "Parkway Digital"
+msgstr ""
+
+#. Author URI of the plugin
+#: pkwycompliance.php
+msgid "https://www.pkwydigital.com"
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:52
+#: includes/components/consent/adapters/gravityforms.php:58
+msgid "PKWY Consent"
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:122
+#: includes/components/consent/adapters/wpforms.php:164
+#: includes/components/consent/logic.php:231
+msgid "This form cannot be submitted at this time."
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:124
+#: includes/components/consent/adapters/wpforms.php:166
+msgid "Admin:"
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:124
+#: includes/components/consent/adapters/wpforms.php:166
+msgid "See Settings, Compliance."
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:192
+#: includes/components/consent/adapters/wpforms.php:107
+msgid "Custom wording"
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:194
+msgid "Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out."
+msgstr ""
+
+#: includes/components/consent/adapters/gravityforms.php:373
+#: includes/components/consent/adapters/wpforms.php:405
+#: includes/settings.php:204
+msgid "Consent wording"
+msgstr ""
+
+#: includes/components/consent/adapters/wpforms.php:37
+#: includes/components/consent/adapters/wpforms.php:209
+msgid "Consent"
+msgstr ""
+
+#. translators: %s: link to the settings screen.
+#: includes/components/consent/adapters/wpforms.php:65
+#, php-format
+msgid "The links, and the wording unless set below, come from %s."
+msgstr ""
+
+#: includes/components/consent/adapters/wpforms.php:66
+#: includes/settings.php:377
+msgid "Settings, Compliance"
+msgstr ""
+
+#: includes/components/consent/adapters/wpforms.php:89
+msgid "Optional"
+msgstr ""
+
+#: includes/components/consent/adapters/wpforms.php:98
+msgid "Off: the form cannot be submitted unless the box is ticked. On: visitors may leave it unticked, and the entry records an empty value."
+msgstr ""
+
+#: includes/components/consent/adapters/wpforms.php:108
+msgid "Leave blank to use the site wording. {company}, {privacy} and {terms} work here too, and the links are added if left out."
+msgstr ""
+
+#: includes/components/consent/adapters/wpforms.php:146
+msgid "Not configured. Set the Privacy Policy URL and the wording under Settings, Compliance (and a Terms URL if the wording uses {terms}). Until then this form cannot be submitted."
+msgstr ""
+
+#: includes/components/consent/audit.php:208
+msgid "Checks Consent. Only people who tick the box are subscribed."
+msgstr ""
+
+#: includes/components/consent/audit.php:210
+msgid "Checks Consent in some rule groups but not all. Mailchimp will subscribe some people who did not tick the box."
+msgstr ""
+
+#: includes/components/consent/audit.php:212
+msgid "Does not subscribe anyone. Check by hand whether it should depend on Consent."
+msgstr ""
+
+#: includes/components/consent/audit.php:214
+msgid "Does not check Consent. Mailchimp will subscribe people who did not tick the box."
+msgstr ""
+
+#: includes/components/consent/logic.php:78
+msgid "The Privacy Policy URL is not set."
+msgstr ""
+
+#: includes/components/consent/logic.php:80
+msgid "The consent wording is blank."
+msgstr ""
+
+#: includes/components/consent/logic.php:82
+msgid "The wording uses {terms} but there is no Terms URL. Either add a Terms URL or take {terms} out of the wording."
+msgstr ""
+
+#: includes/components/consent/logic.php:134
+msgid "Privacy Policy"
+msgstr ""
+
+#: includes/components/consent/logic.php:142
+msgid "Terms"
+msgstr ""
+
+#. translators: 1: privacy policy link, 2: terms link.
+#: includes/components/consent/logic.php:162
+#, php-format
+msgid "See our %1$s and %2$s."
+msgstr ""
+
+#. translators: %s: privacy policy link.
+#: includes/components/consent/logic.php:169
+#, php-format
+msgid "See our %s."
+msgstr ""
+
+#: includes/components/consent/logic.php:234
+msgid "You must agree to continue."
+msgstr ""
+
+#: includes/components/consent/logic.php:361
+msgid "This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: open the form's Mailchimp connections and, on every one that subscribes people, add Consent is not empty to each rule group. Settings, Compliance shows whether that is done."
+msgstr ""
+
+#: includes/components/consent/logic.php:363
+msgid "If this form is later connected to Mailchimp, add Consent is not empty to every connection that subscribes people, or the box will make no difference."
+msgstr ""
+
+#: includes/components/consent/logic.php:397
+msgid "Not recorded. The entry was made before PKWY Compliance 1.3.0, which started keeping the wording with each entry."
+msgstr ""
+
+#: includes/components/consent/logic.php:399
+msgid "Wording shown beside the Consent box when this entry was sent:"
+msgstr ""
+
+#. translators: 1: date and time, 2: plugin version
+#: includes/components/consent/logic.php:403
+#, php-format
+msgid "Recorded %1$s by PKWY Compliance %2$s."
+msgstr ""
+
+#: includes/settings.php:33
+#: includes/settings.php:34
+#: includes/settings.php:154
+msgid "Compliance"
+msgstr ""
+
+#: includes/settings.php:73
+msgid "What it does"
+msgstr ""
+
+#: includes/settings.php:74
+msgid "Adds a marketing consent checkbox to WPForms and Gravity Forms. The wording and the Privacy Policy and Terms links are set once, on this screen, and every form using the field shows them. The box is never ticked in advance. An entry records agreed when it was ticked and a blank when it was not."
+msgstr ""
+
+#: includes/settings.php:75
+msgid "The field records the answer. It does not, by itself, stop anyone being added to a mailing list: see the Mailchimp tab."
+msgstr ""
+
+#: includes/settings.php:79
+msgid "Adding the field"
+msgstr ""
+
+#: includes/settings.php:80
+msgid "In WPForms, add Consent from Fancy Fields. In Gravity Forms, add PKWY Consent from Advanced Fields (not Gravity Forms' own Consent field, which does not use this wording). One per form."
+msgstr ""
+
+#: includes/settings.php:81
+msgid "It is required by default: the form cannot be sent unless the box is ticked. For an enquiry form that must still work without agreeing to marketing, tick Optional (WPForms) or untick Required (Gravity Forms). Custom wording in the field options replaces the site wording on that form only; such forms are listed at the bottom of this screen."
+msgstr ""
+
+#: includes/settings.php:85
+#: includes/settings.php:267
+msgid "Mailchimp"
+msgstr ""
+
+#: includes/settings.php:86
+msgid "Ticking the box changes nothing in Mailchimp on its own. Open the form's Mailchimp connections. On every connection that subscribes people, keep the rules already there and add Consent is not empty to each rule group, using And inside the group. Do not use Add New Group for it: groups are joined by or, so people who did not tick would still get through another group. A connection with no rules needs conditional logic turned on with just that one rule. In Gravity Forms the rule is Consent is agreed."
+msgstr ""
+
+#: includes/settings.php:87
+msgid "The Forms with the Consent field table on this screen checks every connection and shows in red any that would still subscribe people who did not tick."
+msgstr ""
+
+#: includes/settings.php:91
+msgid "Why a form refuses to submit"
+msgstr ""
+
+#: includes/settings.php:92
+msgid "A form carrying the field will not submit while the settings here are not usable. That is deliberate: it is better than asking somebody to agree to documents they cannot open. The reasons are:"
+msgstr ""
+
+#: includes/settings.php:94
+msgid "A missing Privacy Policy URL stops every form with the field. A problem with the site wording stops only forms that use it; forms with their own custom wording keep working."
+msgstr ""
+
+#: includes/settings.php:98
+msgid "Emergency switches"
+msgstr ""
+
+#: includes/settings.php:99
+msgid "The plugin updates itself. Two lines in wp-config.php change that, for when something goes wrong:"
+msgstr ""
+
+#: includes/settings.php:101
+msgid "The first keeps the plugin as it is and stops automatic updates; updates still show on the Plugins screen to apply by hand. The second stops the plugin enforcing anything, so forms submit with or without the box, and shows a warning across wp-admin so the site does not look like it is working normally."
+msgstr ""
+
+#: includes/settings.php:121
+msgid "More"
+msgstr ""
+
+#: includes/settings.php:121
+msgid "Full setup guide"
+msgstr ""
+
+#. translators: %s: link to the setup guide
+#: includes/settings.php:158
+#, php-format
+msgid "New to this? Open Help at the top right, or read the %s."
+msgstr ""
+
+#: includes/settings.php:159
+msgid "setup guide"
+msgstr ""
+
+#: includes/settings.php:165
+msgid "The consent field is not usable yet."
+msgstr ""
+
+#: includes/settings.php:169
+msgid "Until it is set, every form carrying the consent field will refuse to submit, including forms with custom wording."
+msgstr ""
+
+#: includes/settings.php:171
+msgid "Until it is fixed, forms using the site wording will refuse to submit. Forms with their own custom wording are not affected by this."
+msgstr ""
+
+#: includes/settings.php:174
+msgid "That is deliberate: it is better than asking somebody to agree to documents they cannot open."
+msgstr ""
+
+#: includes/settings.php:182
+msgid "Form consent field"
+msgstr ""
+
+#: includes/settings.php:184
+msgid "This wording appears beside the consent checkbox on every form that uses the field, unless that form sets custom wording in the field options. The links always come from here. Forms with custom wording are listed below so they do not drift unnoticed."
+msgstr ""
+
+#: includes/settings.php:189
+msgid "Company name"
+msgstr ""
+
+#: includes/settings.php:191
+msgid "Substituted wherever {company} appears in the wording."
+msgstr ""
+
+#: includes/settings.php:194
+msgid "Privacy Policy URL"
+msgstr ""
+
+#: includes/settings.php:199
+msgid "Terms URL"
+msgstr ""
+
+#: includes/settings.php:201
+msgid "Optional. Leave blank if the site has no terms page, and take {terms} out of the wording."
+msgstr ""
+
+#: includes/settings.php:208
+msgid "Use {company}, {privacy} and {terms} as placeholders. If you leave the link placeholders out, the links are added on the end anyway, because consent to terms nobody can reach is not consent."
+msgstr ""
+
+#: includes/settings.php:214
+msgid "Preview"
+msgstr ""
+
+#: includes/settings.php:218
+msgid "Nothing to preview until the URLs and wording are filled in."
+msgstr ""
+
+#: includes/settings.php:225
+msgid "Forms with the Consent field"
+msgstr ""
+
+#: includes/settings.php:226
+msgid "Ticking the box changes nothing in Mailchimp by itself. Every Mailchimp connection that subscribes people needs Consent is not empty added to each of its rule groups. This table checks that for you."
+msgstr ""
+
+#: includes/settings.php:229
+msgid "Forms with custom wording"
+msgstr ""
+
+#: includes/settings.php:234
+msgid "None. Every consent field uses the wording above."
+msgstr ""
+
+#: includes/settings.php:236
+#: includes/settings.php:267
+msgid "Form"
+msgstr ""
+
+#: includes/settings.php:236
+msgid "Wording shown"
+msgstr ""
+
+#: includes/settings.php:244
+msgid "Not usable until the URLs are filled in."
+msgstr ""
+
+#: includes/settings.php:263
+msgid "No form uses the Consent field yet."
+msgstr ""
+
+#: includes/settings.php:272
+msgid "No Mailchimp connection."
+msgstr ""
+
+#. translators: %s: page title, linked
+#: includes/settings.php:324
+#, php-format
+msgid "This links to the page: %s"
+msgstr ""
+
+#: includes/settings.php:326
+msgid "This is not a page on this site. Open it to check it is the privacy policy."
+msgstr ""
+
+#. translators: %s: page title, linked
+#: includes/settings.php:334
+#, php-format
+msgid "WordPress has a privacy page set under Settings, Privacy: %s."
+msgstr ""
+
+#: includes/settings.php:336
+msgid "Filled in. Check it is right, then Save Changes."
+msgstr ""
+
+#: includes/settings.php:337
+msgid "Use this page"
+msgstr ""
+
+#. translators: %s: page title, linked
+#: includes/settings.php:342
+#, php-format
+msgid "This is not the page set under Settings, Privacy (%s). One of the two may be out of date."
+msgstr ""
+
+#: includes/settings.php:381
+msgid "PKWY Compliance is not set up."
+msgstr ""
+
+#: includes/settings.php:382
+#, php-format
+msgid "Any form carrying the Consent field will refuse to submit until it is. Fix it under %s."
+msgstr ""
+
+#: includes/settings.php:384
+msgid "PKWY Compliance: the site consent wording is not usable."
+msgstr ""
+
+#: includes/settings.php:385
+#, php-format
+msgid "Forms using the site wording will refuse to submit; forms with their own custom wording are not affected. Check it under %s."
+msgstr ""
+
+#: pkwycompliance.php:121
+msgid "PKWYC_DISABLE is set in wp-config.php, so no consent field is being enforced on this site."
+msgstr ""

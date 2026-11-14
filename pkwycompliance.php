@@ -96,6 +96,15 @@ function pkwyc_load_components() {
 add_action( 'plugins_loaded', 'pkwyc_load_components', 20 );
 
 /**
+ * Translations shipped in languages/. Loaded on init, not earlier: WordPress
+ * 6.7+ complains about a text domain loaded before init.
+ */
+function pkwyc_load_textdomain() {
+	load_plugin_textdomain( 'pkwycompliance', false, dirname( PKWYC_BASENAME ) . '/languages' );
+}
+add_action( 'init', 'pkwyc_load_textdomain' );
+
+/**
  * Tell anyone looking at the Plugins screen that enforcement is off.
  *
  * Without this, a site running with the kill switch looks identical to a site
