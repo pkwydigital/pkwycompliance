@@ -68,6 +68,15 @@ function pkwyc_consent_wpforms_register() {
 				)
 			);
 
+			$this->field_element(
+				'row',
+				$field,
+				array(
+					'slug'    => 'pkwyc_mailchimp_hint',
+					'content' => '<p class="note" style="margin:0;color:#996800">' . esc_html( pkwyc_consent_mailchimp_hint( pkwyc_consent_wpforms_form_has_mailchimp( $this->form_id ) ) ) . '</p>',
+				)
+			);
+
 			$this->field_option( 'label', $field );
 			$this->field_option( 'description', $field );
 
@@ -209,6 +218,17 @@ function pkwyc_consent_wpforms_register() {
 	}
 
 	new PKWYC_WPForms_Consent_Field();
+}
+
+/**
+ * Does this WPForms form have any Mailchimp connection?
+ */
+function pkwyc_consent_wpforms_form_has_mailchimp( $form_id ) {
+	if ( ! $form_id || ! function_exists( 'wpforms' ) ) {
+		return false;
+	}
+	$data = wpforms()->obj( 'form' )->get( absint( $form_id ), array( 'content_only' => true ) );
+	return ! empty( $data['providers']['mailchimpv3'] );
 }
 
 /**

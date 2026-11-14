@@ -347,3 +347,18 @@ function pkwyc_privacy_page_advice( $plugin_url, $wp_page ) {
 
 	return array( 'state' => pkwyc_urls_match( $plugin_url, $wp_page['url'] ) ? 'same' : 'differs' ) + $out;
 }
+
+/**
+ * The note shown beside the Consent field in the form builders.
+ *
+ * Adding the box changes nothing in Mailchimp by itself, and nothing warns
+ * about that anywhere else, so the builder says so where the field is added.
+ *
+ * @param bool $has_mailchimp Does this form already send people to Mailchimp?
+ */
+function pkwyc_consent_mailchimp_hint( $has_mailchimp ) {
+	if ( $has_mailchimp ) {
+		return __( 'This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: open the form\'s Mailchimp connections and, on every one that subscribes people, add Consent is not empty to each rule group. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
+	}
+	return __( 'If this form is later connected to Mailchimp, add Consent is not empty to every connection that subscribes people, or the box will make no difference.', 'pkwycompliance' );
+}

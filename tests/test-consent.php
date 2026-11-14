@@ -162,4 +162,10 @@ pkwyc_assert( 'url set, different published page: differs', pkwyc_privacy_page_a
 pkwyc_assert( 'url set, same page written differently: same', pkwyc_privacy_page_advice( 'http://A.com/legal-notices', $wp_page )['state'], 'same' );
 pkwyc_assert( 'url set, page is a draft: nothing to compare', pkwyc_privacy_page_advice( 'https://a.com/privacy-policy/', array_merge( $wp_page, array( 'status' => 'draft' ) ) )['state'], 'none' );
 
+// --- builder hint about Mailchimp ----------------------------------------
+pkwyc_assert( 'hint when the form sends to Mailchimp names the fix', strpos( pkwyc_consent_mailchimp_hint( true ), 'Consent is not empty' ) !== false, true );
+pkwyc_assert( 'hint when the form sends to Mailchimp says it does nothing alone', strpos( pkwyc_consent_mailchimp_hint( true ), 'does nothing to Mailchimp on its own' ) !== false, true );
+pkwyc_assert( 'hint without Mailchimp is about a later connection', strpos( pkwyc_consent_mailchimp_hint( false ), 'If this form is later connected to Mailchimp' ) === 0, true );
+pkwyc_assert( 'the two hints differ', pkwyc_consent_mailchimp_hint( true ) !== pkwyc_consent_mailchimp_hint( false ), true );
+
 pkwyc_results();
