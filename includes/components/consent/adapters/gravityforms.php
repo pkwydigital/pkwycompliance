@@ -193,13 +193,36 @@ function pkwyc_consent_gf_wording_setting( $position, $form_id ) {
 		<textarea id="pkwyc_wording" class="fieldwidth-3 fieldheight-2" oninput="SetFieldProperty('pkwycWording', this.value);"></textarea>
 		<p class="description"><?php esc_html_e( 'Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out.', 'pkwycompliance' ); ?></p>
 		<p class="description pkwyc-mailchimp-hint" style="color:#996800"><?php
-			$pkwyc_feeds = ( class_exists( 'GFMailChimp' ) && class_exists( 'GFAPI' ) ) ? GFAPI::get_feeds( null, absint( $form_id ), 'gravityformsmailchimp' ) : array();
-			echo esc_html( pkwyc_consent_mailchimp_hint( ! is_wp_error( $pkwyc_feeds ) && ! empty( $pkwyc_feeds ), 'gravityforms' ) );
+			echo esc_html( pkwyc_consent_mailchimp_hint( 'gravityforms' ) );
 		?></p>
 	</li>
 	<?php
 }
 add_action( 'gform_field_standard_settings', 'pkwyc_consent_gf_wording_setting', 10, 2 );
+
+/**
+ * Every Gravity Forms form, loaded once per request: the settings screen needs
+ * them for both the custom-wording list and the forms table.
+ */
+function pkwyc_consent_gf_all_forms( $forget = false ) {
+	static $forms = null;
+	if ( $forget ) {
+		$forms = null;
+		return array();
+	}
+	if ( $forms === null ) {
+		$forms = (array) GFAPI::get_forms();
+	}
+	return $forms;
+}
+
+/**
+ * A form saved later in the same request is read again, not from the copy above.
+ */
+function pkwyc_consent_gf_forget_forms() {
+	pkwyc_consent_gf_all_forms( true );
+}
+add_action( 'gform_after_save_form', 'pkwyc_consent_gf_forget_forms' );
 
 /**
  * Gravity Forms forms whose consent field carries custom wording, for the
@@ -211,7 +234,7 @@ function pkwyc_consent_gf_overrides( $found ) {
 		return $found;
 	}
 
-	foreach ( (array) GFAPI::get_forms() as $form ) {
+	foreach ( pkwyc_consent_gf_all_forms() as $form ) {
 		if ( empty( $form['fields'] ) ) {
 			continue;
 		}
@@ -244,9 +267,10 @@ function pkwyc_consent_gf_report( $rows ) {
 		return $rows;
 	}
 
-	$mailchimp = class_exists( 'GFMailChimp' );
+	// Every Mailchimp feed on the site in one query, not one per form.
+	$feeds_by_form = class_exists( 'GFMailChimp' ) ? pkwyc_audit_group_feeds_by_form( GFAPI::get_feeds( null, null, 'gravityformsmailchimp' ) ) : array();
 
-	foreach ( (array) GFAPI::get_forms() as $form ) {
+	foreach ( pkwyc_consent_gf_all_forms() as $form ) {
 		$consent_id = '';
 		foreach ( (array) rgar( $form, 'fields' ) as $field ) {
 			if ( isset( $field->type ) && $field->type === 'pkwyc_consent' ) {
@@ -260,9 +284,8 @@ function pkwyc_consent_gf_report( $rows ) {
 
 		$form_id     = absint( rgar( $form, 'id' ) );
 		$connections = array();
-		if ( $mailchimp ) {
-			$feeds = GFAPI::get_feeds( null, $form_id, 'gravityformsmailchimp' );
-			foreach ( pkwyc_audit_gf_connections( is_wp_error( $feeds ) ? array() : $feeds, $consent_id ) as $c ) {
+		if ( isset( $feeds_by_form[ $form_id ] ) ) {
+			foreach ( pkwyc_audit_gf_connections( $feeds_by_form[ $form_id ], $consent_id ) as $c ) {
 				$c['edit_url']  = admin_url( 'admin.php?page=gf_edit_forms&view=settings&subview=gravityformsmailchimp&id=' . $form_id . '&fid=' . absint( $c['id'] ) );
 				$connections[] = $c;
 			}

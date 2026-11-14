@@ -349,24 +349,20 @@ function pkwyc_privacy_page_advice( $plugin_url, $wp_page ) {
 }
 
 /**
- * The note shown beside the Consent field in the form builders.
+ * The note beside the Consent field in the form builders.
  *
- * Adding the box changes nothing in Mailchimp by itself, and nothing warns
- * about that anywhere else, so the builder says so where the field is added.
+ * It makes no claim about whether this form has a Mailchimp connection: that
+ * can change in the builder without a reload, and a note that read it went
+ * stale. Settings, Compliance shows the real state of every connection.
  *
- * @param bool $has_mailchimp Does this form already send people to Mailchimp?
+ * @param string $platform 'wpforms' or 'gravityforms'.
+ * @return string
  */
-function pkwyc_consent_mailchimp_hint( $has_mailchimp, $platform = 'wpforms' ) {
+function pkwyc_consent_mailchimp_hint( $platform = 'wpforms' ) {
 	if ( $platform === 'gravityforms' ) {
-		if ( $has_mailchimp ) {
-			return __( 'This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: on every Mailchimp feed that subscribes people, turn on the condition and require Consent is agreed. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
-		}
-		return __( 'If this form is later connected to Mailchimp, give every feed that subscribes people the condition Consent is agreed, or the box will make no difference.', 'pkwycompliance' );
+		return __( 'Ticking this box does nothing to Mailchimp on its own. If this form sends people to Mailchimp, turn on the condition on every feed that subscribes people and require Consent is agreed. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
 	}
-	if ( $has_mailchimp ) {
-		return __( 'This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: open the form\'s Mailchimp connections and, on every one that subscribes people, add Consent is not empty to each rule group. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
-	}
-	return __( 'If this form is later connected to Mailchimp, add Consent is not empty to every connection that subscribes people, or the box will make no difference.', 'pkwycompliance' );
+	return __( 'Ticking this box does nothing to Mailchimp on its own. If this form sends people to Mailchimp, add Consent is not empty to each rule group of every connection that subscribes people. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
 }
 
 /**

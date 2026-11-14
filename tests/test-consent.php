@@ -163,10 +163,6 @@ pkwyc_assert( 'url set, same page written differently: same', pkwyc_privacy_page
 pkwyc_assert( 'url set, page is a draft: nothing to compare', pkwyc_privacy_page_advice( 'https://a.com/privacy-policy/', array_merge( $wp_page, array( 'status' => 'draft' ) ) )['state'], 'none' );
 
 // --- builder hint about Mailchimp ----------------------------------------
-pkwyc_assert( 'hint when the form sends to Mailchimp names the fix', strpos( pkwyc_consent_mailchimp_hint( true ), 'Consent is not empty' ) !== false, true );
-pkwyc_assert( 'hint when the form sends to Mailchimp says it does nothing alone', strpos( pkwyc_consent_mailchimp_hint( true ), 'does nothing to Mailchimp on its own' ) !== false, true );
-pkwyc_assert( 'hint without Mailchimp is about a later connection', strpos( pkwyc_consent_mailchimp_hint( false ), 'If this form is later connected to Mailchimp' ) === 0, true );
-pkwyc_assert( 'the two hints differ', pkwyc_consent_mailchimp_hint( true ) !== pkwyc_consent_mailchimp_hint( false ), true );
 
 // --- the record kept with each entry --------------------------------------
 $rec = pkwyc_consent_record( $good, '', '2026-11-13T15:00:00+00:00', '1.3.0' );
@@ -205,10 +201,18 @@ pkwyc_assert( 'switch: non-array passes through', pkwyc_kill_switch_relax_gf_for
 // form while it is on would store the Consent field as optional for good.
 pkwyc_assert( 'switch hooks: front end and validation only', pkwyc_kill_switch_gf_hooks(), array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' ) );
 
-// Review fix: Gravity Forms has no "is not empty"; its rule is "is agreed".
-pkwyc_assert( 'gf hint names the gravity forms rule', strpos( pkwyc_consent_mailchimp_hint( true, 'gravityforms' ), 'Consent is agreed' ) !== false, true );
-pkwyc_assert( 'gf hint does not name the wpforms rule', strpos( pkwyc_consent_mailchimp_hint( true, 'gravityforms' ), 'not empty' ), false );
-pkwyc_assert( 'gf hint without Mailchimp names the gravity forms rule', strpos( pkwyc_consent_mailchimp_hint( false, 'gravityforms' ), 'Consent is agreed' ) !== false, true );
-pkwyc_assert( 'wpforms is the default platform', pkwyc_consent_mailchimp_hint( true ), pkwyc_consent_mailchimp_hint( true, 'wpforms' ) );
+// The builder note does not depend on whether the form has a Mailchimp
+// connection: that state changes in the builder without a reload, and a note
+// that read it went stale. One sentence per platform, true either way.
+$wpf = pkwyc_consent_mailchimp_hint( 'wpforms' );
+$gfh = pkwyc_consent_mailchimp_hint( 'gravityforms' );
+pkwyc_assert( 'hint says the box does nothing alone', strpos( $wpf, 'does nothing to Mailchimp on its own' ) !== false, true );
+pkwyc_assert( 'hint names the wpforms rule', strpos( $wpf, 'Consent is not empty' ) !== false, true );
+pkwyc_assert( 'hint points at the forms table', strpos( $wpf, 'Settings, Compliance' ) !== false, true );
+pkwyc_assert( 'hint makes no claim about this form', strpos( $wpf, 'This form sends' ), false );
+pkwyc_assert( 'gf hint names the gravity forms rule', strpos( $gfh, 'Consent is agreed' ) !== false, true );
+pkwyc_assert( 'gf hint does not name the wpforms rule', strpos( $gfh, 'not empty' ), false );
+pkwyc_assert( 'gf hint says the box does nothing alone', strpos( $gfh, 'does nothing to Mailchimp on its own' ) !== false, true );
+pkwyc_assert( 'wpforms is the default platform', pkwyc_consent_mailchimp_hint(), $wpf );
 
 pkwyc_results();

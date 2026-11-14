@@ -100,4 +100,18 @@ $gf_rows = pkwyc_audit_gf_connections( $gf_feeds, '12' );
 pkwyc_assert( 'gf report: active feeds only', count( $gf_rows ), 1 );
 pkwyc_assert( 'gf report: feed name and status', $gf_rows[0], array( 'id' => '5', 'name' => 'Newsletter', 'status' => 'gated' ) );
 
+// One query for every form's Mailchimp feeds, grouped here.
+$feeds = array(
+	array( 'id' => 1, 'form_id' => '7' ),
+	array( 'id' => 2, 'form_id' => 9 ),
+	array( 'id' => 3, 'form_id' => '7' ),
+	array( 'id' => 4 ),
+	'junk',
+);
+$g = pkwyc_audit_group_feeds_by_form( $feeds );
+pkwyc_assert( 'group: two feeds on form 7, in order', array_column( $g[7], 'id' ), array( 1, 3 ) );
+pkwyc_assert( 'group: one feed on form 9', array_column( $g[9], 'id' ), array( 2 ) );
+pkwyc_assert( 'group: feeds without a form and junk are dropped', array_keys( $g ), array( 7, 9 ) );
+pkwyc_assert( 'group: error or nothing gives no feeds', pkwyc_audit_group_feeds_by_form( null ), array() );
+
 pkwyc_results();

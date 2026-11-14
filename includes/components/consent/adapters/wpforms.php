@@ -34,7 +34,19 @@ function pkwyc_consent_wpforms_register() {
 	class PKWYC_WPForms_Consent_Field extends WPForms_Field {
 
 		public function init() {
-			$this->name  = esc_html__( 'Consent', 'pkwycompliance' );
+			// Translated once WordPress has reached init: translating here, on
+			// plugins_loaded, makes WordPress 6.7+ log a "loaded too early" notice.
+			$this->name = 'Consent';
+			if ( did_action( 'init' ) ) {
+				$this->name = esc_html__( 'Consent', 'pkwycompliance' );
+			} else {
+				add_action(
+					'init',
+					function () {
+						$this->name = esc_html__( 'Consent', 'pkwycompliance' );
+					}
+				);
+			}
 			$this->type  = 'pkwyc_consent';
 			$this->icon  = 'fa-check-square-o';
 			$this->order = 200;
@@ -73,7 +85,7 @@ function pkwyc_consent_wpforms_register() {
 				$field,
 				array(
 					'slug'    => 'pkwyc_mailchimp_hint',
-					'content' => '<p class="note" style="margin:0;color:#996800">' . esc_html( pkwyc_consent_mailchimp_hint( pkwyc_consent_wpforms_form_has_mailchimp( $this->form_id ) ) ) . '</p>',
+					'content' => '<p class="note" style="margin:0;color:#996800">' . esc_html( pkwyc_consent_mailchimp_hint( 'wpforms' ) ) . '</p>',
 				)
 			);
 
@@ -221,22 +233,44 @@ function pkwyc_consent_wpforms_register() {
 }
 
 /**
- * Does this WPForms form have any Mailchimp connection?
- */
-function pkwyc_consent_wpforms_form_has_mailchimp( $form_id ) {
-	if ( ! $form_id || ! function_exists( 'wpforms' ) ) {
-		return false;
-	}
-	$data = wpforms()->obj( 'form' )->get( absint( $form_id ), array( 'content_only' => true ) );
-	return ! empty( $data['providers']['mailchimpv3'] );
-}
-
-/**
  * The settings as this field sees them, with its custom wording applied.
  */
 function pkwyc_consent_wpforms_settings( $field ) {
 	return pkwyc_consent_effective_settings( pkwyc_settings(), isset( $field['pkwyc_wording'] ) ? $field['pkwyc_wording'] : '' );
 }
+
+/**
+ * Every WPForms form, loaded and decoded once per request: the settings
+ * screen needs them for both the custom-wording list and the forms table.
+ *
+ * @return array Form posts, each with its decoded data in ->pkwyc_data.
+ */
+function pkwyc_consent_wpforms_all_forms( $forget = false ) {
+	static $forms = null;
+	if ( $forget ) {
+		$forms = null;
+		return array();
+	}
+	if ( $forms !== null ) {
+		return $forms;
+	}
+	$forms = array();
+	$found = wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) );
+	// get() returns false, not an empty array, when there are no forms.
+	foreach ( is_array( $found ) ? $found : array() as $form ) {
+		$form->pkwyc_data = wpforms_decode( $form->post_content );
+		$forms[]          = $form;
+	}
+	return $forms;
+}
+
+/**
+ * A form saved later in the same request is read again, not from the copy above.
+ */
+function pkwyc_consent_wpforms_forget_forms() {
+	pkwyc_consent_wpforms_all_forms( true );
+}
+add_action( 'save_post_wpforms', 'pkwyc_consent_wpforms_forget_forms' );
 
 /**
  * WPForms forms whose consent field carries custom wording, for the settings
@@ -248,11 +282,8 @@ function pkwyc_consent_wpforms_overrides( $found ) {
 		return $found;
 	}
 
-	$forms = wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) );
-
-	// get() returns false, not an empty array, when there are no forms.
-	foreach ( is_array( $forms ) ? $forms : array() as $form ) {
-		$data = wpforms_decode( $form->post_content );
+	foreach ( pkwyc_consent_wpforms_all_forms() as $form ) {
+		$data = $form->pkwyc_data;
 		if ( empty( $data['fields'] ) ) {
 			continue;
 		}
@@ -284,10 +315,8 @@ function pkwyc_consent_wpforms_report( $rows ) {
 		return $rows;
 	}
 
-	$forms = wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) );
-
-	foreach ( is_array( $forms ) ? $forms : array() as $form ) {
-		$report = pkwyc_audit_wpforms_form( wpforms_decode( $form->post_content ) );
+	foreach ( pkwyc_consent_wpforms_all_forms() as $form ) {
+		$report = pkwyc_audit_wpforms_form( $form->pkwyc_data );
 		if ( $report === null ) {
 			continue;
 		}

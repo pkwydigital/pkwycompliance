@@ -214,3 +214,24 @@ function pkwyc_audit_status_label( $status ) {
 			return __( 'Does not check Consent. Mailchimp will subscribe people who did not tick the box.', 'pkwycompliance' );
 	}
 }
+
+/**
+ * Group Gravity Forms feeds by form id, so every form's Mailchimp feeds come
+ * from one query instead of one query per form.
+ *
+ * @param array|mixed $feeds Feeds from GFAPI::get_feeds() (a WP_Error or null when there are none).
+ * @return array form id => list of feeds, in their original order.
+ */
+function pkwyc_audit_group_feeds_by_form( $feeds ) {
+	$grouped = array();
+	if ( ! is_array( $feeds ) ) {
+		return $grouped;
+	}
+	foreach ( $feeds as $feed ) {
+		if ( ! is_array( $feed ) || empty( $feed['form_id'] ) ) {
+			continue;
+		}
+		$grouped[ (int) $feed['form_id'] ][] = $feed;
+	}
+	return $grouped;
+}

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-14T03:36:18+00:00\n"
+"POT-Creation-Date: 2026-11-14T03:47:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: pkwycompliance\n"
@@ -45,23 +45,23 @@ msgid "PKWY Consent"
 msgstr ""
 
 #: includes/components/consent/adapters/gravityforms.php:122
-#: includes/components/consent/adapters/wpforms.php:164
+#: includes/components/consent/adapters/wpforms.php:176
 #: includes/components/consent/logic.php:231
 msgid "This form cannot be submitted at this time."
 msgstr ""
 
 #: includes/components/consent/adapters/gravityforms.php:124
-#: includes/components/consent/adapters/wpforms.php:166
+#: includes/components/consent/adapters/wpforms.php:178
 msgid "Admin:"
 msgstr ""
 
 #: includes/components/consent/adapters/gravityforms.php:124
-#: includes/components/consent/adapters/wpforms.php:166
+#: includes/components/consent/adapters/wpforms.php:178
 msgid "See Settings, Compliance."
 msgstr ""
 
 #: includes/components/consent/adapters/gravityforms.php:192
-#: includes/components/consent/adapters/wpforms.php:107
+#: includes/components/consent/adapters/wpforms.php:119
 msgid "Custom wording"
 msgstr ""
 
@@ -69,41 +69,42 @@ msgstr ""
 msgid "Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out."
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:373
-#: includes/components/consent/adapters/wpforms.php:416
+#: includes/components/consent/adapters/gravityforms.php:396
+#: includes/components/consent/adapters/wpforms.php:445
 #: includes/settings.php:204
 msgid "Consent wording"
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:37
-#: includes/components/consent/adapters/wpforms.php:209
+#: includes/components/consent/adapters/wpforms.php:41
+#: includes/components/consent/adapters/wpforms.php:46
+#: includes/components/consent/adapters/wpforms.php:221
 msgid "Consent"
 msgstr ""
 
 #. translators: %s: link to the settings screen.
-#: includes/components/consent/adapters/wpforms.php:65
+#: includes/components/consent/adapters/wpforms.php:77
 #, php-format
 msgid "The links, and the wording unless set below, come from %s."
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:66
+#: includes/components/consent/adapters/wpforms.php:78
 #: includes/settings.php:383
 msgid "Settings, Compliance"
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:89
+#: includes/components/consent/adapters/wpforms.php:101
 msgid "Optional"
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:98
+#: includes/components/consent/adapters/wpforms.php:110
 msgid "Off: the form cannot be submitted unless the box is ticked. On: visitors may leave it unticked, and the entry records an empty value."
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:108
+#: includes/components/consent/adapters/wpforms.php:120
 msgid "Leave blank to use the site wording. {company}, {privacy} and {terms} work here too, and the links are added if left out."
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:146
+#: includes/components/consent/adapters/wpforms.php:158
 msgid "Not configured. Set the Privacy Policy URL and the wording under Settings, Compliance (and a Terms URL if the wording uses {terms}). Until then this form cannot be submitted."
 msgstr ""
 
@@ -159,32 +160,24 @@ msgstr ""
 msgid "You must agree to continue."
 msgstr ""
 
-#: includes/components/consent/logic.php:362
-msgid "This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: on every Mailchimp feed that subscribes people, turn on the condition and require Consent is agreed. Settings, Compliance shows whether that is done."
+#: includes/components/consent/logic.php:363
+msgid "Ticking this box does nothing to Mailchimp on its own. If this form sends people to Mailchimp, turn on the condition on every feed that subscribes people and require Consent is agreed. Settings, Compliance shows whether that is done."
 msgstr ""
 
-#: includes/components/consent/logic.php:364
-msgid "If this form is later connected to Mailchimp, give every feed that subscribes people the condition Consent is agreed, or the box will make no difference."
+#: includes/components/consent/logic.php:365
+msgid "Ticking this box does nothing to Mailchimp on its own. If this form sends people to Mailchimp, add Consent is not empty to each rule group of every connection that subscribes people. Settings, Compliance shows whether that is done."
 msgstr ""
 
-#: includes/components/consent/logic.php:367
-msgid "This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: open the form's Mailchimp connections and, on every one that subscribes people, add Consent is not empty to each rule group. Settings, Compliance shows whether that is done."
-msgstr ""
-
-#: includes/components/consent/logic.php:369
-msgid "If this form is later connected to Mailchimp, add Consent is not empty to every connection that subscribes people, or the box will make no difference."
-msgstr ""
-
-#: includes/components/consent/logic.php:403
+#: includes/components/consent/logic.php:399
 msgid "No wording was recorded with this entry (made before 1.3.0, or while the plugin was switched off)."
 msgstr ""
 
-#: includes/components/consent/logic.php:405
+#: includes/components/consent/logic.php:401
 msgid "Consent wording in effect when this entry was received:"
 msgstr ""
 
 #. translators: 1: date and time, 2: plugin version
-#: includes/components/consent/logic.php:409
+#: includes/components/consent/logic.php:405
 #, php-format
 msgid "Recorded %1$s by PKWY Compliance %2$s."
 msgstr ""
