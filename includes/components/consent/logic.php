@@ -290,3 +290,60 @@ function pkwyc_consent_add_conditional_type( $types ) {
 
 	return $types;
 }
+
+/**
+ * Do two URLs point at the same page?
+ *
+ * Scheme, host case, a trailing slash and the fragment do not matter; the
+ * path and the query do. Two empty URLs are not a match.
+ */
+function pkwyc_urls_match( $a, $b ) {
+
+	$norm = function ( $url ) {
+		$url = trim( (string) $url );
+		if ( $url === '' ) {
+			return '';
+		}
+		$p = parse_url( $url );
+		if ( ! is_array( $p ) || empty( $p['host'] ) ) {
+			return '';
+		}
+		$path  = isset( $p['path'] ) ? rtrim( $p['path'], '/' ) : '';
+		$query = isset( $p['query'] ) ? '?' . $p['query'] : '';
+		return strtolower( $p['host'] ) . $path . $query;
+	};
+
+	$na = $norm( $a );
+	return $na !== '' && $na === $norm( $b );
+}
+
+/**
+ * What to say about WordPress's own privacy page (Settings, Privacy).
+ *
+ * Never used as a silent fallback: a site can point that setting at the wrong
+ * page. It is offered as a suggestion when the plugin's URL is empty, and
+ * flagged when the two disagree. Only a published page counts.
+ *
+ * @param string     $plugin_url The Privacy Policy URL saved in this plugin.
+ * @param array|null $wp_page    array( 'url', 'title', 'status' ) of the WordPress privacy page, or null.
+ * @return array array( 'state' => 'suggest'|'differs'|'same'|'none', 'url' => string, 'title' => string )
+ */
+function pkwyc_privacy_page_advice( $plugin_url, $wp_page ) {
+
+	$none = array( 'state' => 'none', 'url' => '', 'title' => '' );
+
+	if ( ! is_array( $wp_page ) || ( isset( $wp_page['status'] ) ? $wp_page['status'] : '' ) !== 'publish' || empty( $wp_page['url'] ) ) {
+		return $none;
+	}
+
+	$out = array(
+		'url'   => (string) $wp_page['url'],
+		'title' => isset( $wp_page['title'] ) ? (string) $wp_page['title'] : '',
+	);
+
+	if ( trim( (string) $plugin_url ) === '' ) {
+		return array( 'state' => 'suggest' ) + $out;
+	}
+
+	return array( 'state' => pkwyc_urls_match( $plugin_url, $wp_page['url'] ) ? 'same' : 'differs' ) + $out;
+}

@@ -102,7 +102,8 @@ function pkwyc_settings_page() {
 				</tr>
 				<tr>
 					<th scope="row"><label for="pkwyc_privacy"><?php esc_html_e( 'Privacy Policy URL', 'pkwycompliance' ); ?></label></th>
-					<td><input name="<?php echo esc_attr( PKWYC_OPTION ); ?>[privacy_url]" id="pkwyc_privacy" type="url" class="regular-text code" value="<?php echo esc_attr( $s['privacy_url'] ); ?>" placeholder="https://"></td>
+					<td><input name="<?php echo esc_attr( PKWYC_OPTION ); ?>[privacy_url]" id="pkwyc_privacy" type="url" class="regular-text code" value="<?php echo esc_attr( $s['privacy_url'] ); ?>" placeholder="https://">
+					<?php pkwyc_settings_privacy_page_hint( $s['privacy_url'] ); ?></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="pkwyc_terms"><?php esc_html_e( 'Terms URL', 'pkwycompliance' ); ?></label></th>
@@ -154,6 +155,57 @@ function pkwyc_settings_page() {
 		?>
 	</div>
 	<?php
+}
+
+/**
+ * Under the Privacy Policy URL: name the page it links to, and compare it with
+ * WordPress's own privacy page setting (Settings, Privacy). Suggests that page
+ * when the URL is empty, but never fills it in by itself: a site can point the
+ * WordPress setting at the wrong page, and a person has to look first.
+ */
+function pkwyc_settings_privacy_page_hint( $plugin_url ) {
+
+	$wp_page = null;
+	$page_id = (int) get_option( 'wp_page_for_privacy_policy' );
+	if ( $page_id > 0 && get_post( $page_id ) ) {
+		$wp_page = array(
+			'url'    => (string) get_permalink( $page_id ),
+			'title'  => get_the_title( $page_id ),
+			'status' => (string) get_post_status( $page_id ),
+		);
+	}
+
+	$advice = pkwyc_privacy_page_advice( $plugin_url, $wp_page );
+	$link   = function ( $url, $title ) {
+		return sprintf( '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>', esc_url( $url ), esc_html( $title !== '' ? $title : $url ) );
+	};
+
+	if ( trim( (string) $plugin_url ) !== '' ) {
+		$own_id = url_to_postid( $plugin_url );
+		if ( $own_id > 0 ) {
+			/* translators: %s: page title, linked */
+			echo '<p class="description pkwyc-privacy-names">' . sprintf( esc_html__( 'This links to the page: %s', 'pkwycompliance' ), $link( $plugin_url, get_the_title( $own_id ) ) ) . '</p>';
+		} else {
+			echo '<p class="description pkwyc-privacy-names">' . esc_html__( 'This is not a page on this site. Open it to check it is the privacy policy.', 'pkwycompliance' ) . '</p>';
+		}
+	}
+
+	if ( $advice['state'] === 'suggest' ) {
+		printf(
+			'<p class="description pkwyc-privacy-suggest">%s <button type="button" class="button button-small" onclick="document.getElementById(\'pkwyc_privacy\').value=%s;this.parentNode.lastChild.textContent=\' %s\';">%s</button><span></span></p>',
+			/* translators: %s: page title, linked */
+			sprintf( esc_html__( 'WordPress has a privacy page set under Settings, Privacy: %s.', 'pkwycompliance' ), $link( $advice['url'], $advice['title'] ) ),
+			esc_attr( wp_json_encode( $advice['url'] ) ),
+			esc_attr__( 'Filled in. Check it is right, then Save Changes.', 'pkwycompliance' ),
+			esc_html__( 'Use this page', 'pkwycompliance' )
+		);
+	} elseif ( $advice['state'] === 'differs' ) {
+		echo '<p class="description pkwyc-privacy-differs" style="color:#996800">' . sprintf(
+			/* translators: %s: page title, linked */
+			esc_html__( 'This is not the page set under Settings, Privacy (%s). One of the two may be out of date.', 'pkwycompliance' ),
+			$link( $advice['url'], $advice['title'] )
+		) . '</p>';
+	}
 }
 
 /**

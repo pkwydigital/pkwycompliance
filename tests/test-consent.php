@@ -143,4 +143,23 @@ pkwyc_assert( 'enforcing by default', pkwyc_is_disabled(), false );
 define( 'PKWYC_DISABLE', true );
 pkwyc_assert( 'constant disables it', pkwyc_is_disabled(), true );
 
+// --- the WordPress privacy page (Settings, Privacy) ---------------------
+pkwyc_assert( 'urls match ignoring scheme, host case and trailing slash', pkwyc_urls_match( 'https://a.com/privacy/', 'http://A.com/privacy' ), true );
+pkwyc_assert( 'urls with different paths do not match', pkwyc_urls_match( 'https://a.com/privacy/', 'https://a.com/privacy-policy/' ), false );
+pkwyc_assert( 'two empty urls do not match', pkwyc_urls_match( '', '' ), false );
+pkwyc_assert( 'urls ignore the fragment', pkwyc_urls_match( 'https://a.com/privacy/#cookies', 'https://a.com/privacy/' ), true );
+pkwyc_assert( 'urls keep the query', pkwyc_urls_match( 'https://a.com/?page_id=3', 'https://a.com/?page_id=4' ), false );
+
+$wp_page = array( 'url' => 'https://a.com/legal-notices/', 'title' => 'Legal Notices', 'status' => 'publish' );
+$advice  = pkwyc_privacy_page_advice( '', $wp_page );
+pkwyc_assert( 'empty url and a published page: suggest it', $advice['state'], 'suggest' );
+pkwyc_assert( 'suggestion carries the url', $advice['url'], 'https://a.com/legal-notices/' );
+pkwyc_assert( 'suggestion carries the title, so a wrong page is obvious', $advice['title'], 'Legal Notices' );
+pkwyc_assert( 'draft page never suggested', pkwyc_privacy_page_advice( '', array_merge( $wp_page, array( 'status' => 'draft' ) ) )['state'], 'none' );
+pkwyc_assert( 'trashed page never suggested', pkwyc_privacy_page_advice( '', array_merge( $wp_page, array( 'status' => 'trash' ) ) )['state'], 'none' );
+pkwyc_assert( 'no page set: nothing to say', pkwyc_privacy_page_advice( '', null )['state'], 'none' );
+pkwyc_assert( 'url set, different published page: differs', pkwyc_privacy_page_advice( 'https://a.com/privacy-policy/', $wp_page )['state'], 'differs' );
+pkwyc_assert( 'url set, same page written differently: same', pkwyc_privacy_page_advice( 'http://A.com/legal-notices', $wp_page )['state'], 'same' );
+pkwyc_assert( 'url set, page is a draft: nothing to compare', pkwyc_privacy_page_advice( 'https://a.com/privacy-policy/', array_merge( $wp_page, array( 'status' => 'draft' ) ) )['state'], 'none' );
+
 pkwyc_results();
