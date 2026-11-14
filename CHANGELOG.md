@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.0
+
+- Settings, Compliance: a "Forms with the Consent field" table lists every form using the field and, for each Mailchimp connection (WPForms) or active Mailchimp feed (Gravity Forms), whether it only subscribes people who ticked the box. Adding the box changes nothing in Mailchimp by itself; connections that would still subscribe everyone are shown in red.
+- Settings, Compliance: the Privacy Policy URL now names the page it links to, offers the page set under Settings, Privacy when the box is empty (it fills the box, nothing is saved until Save Changes), and notes when the two differ. Only a published page is suggested, and it is never used silently.
+- A Help tab on Settings, Compliance (what it does, adding the field, Mailchimp, why a form refuses to submit, emergency switches), and a link to the setup guide in the README.
+- The form builders say, beside the Consent field, that it does nothing to Mailchimp on its own.
+- Every entry from a form with the field now keeps the exact wording the visitor was shown, with the time and plugin version, and the entry screen shows it. The stored answer is unchanged: "agreed" or empty.
+- Fix: on Gravity Forms 3.x the editor allowed a second Consent field, and Duplicate made another. The field now cannot be added twice or duplicated.
+- Fix: with PKWYC_DISABLE set, Gravity Forms forms carrying a required Consent field could not be submitted at all. The switch now makes that field optional.
+- Gravity Forms: the field is called "PKWY Consent" in the editor, to tell it apart from Gravity Forms' own Consent field.
+- Translation template shipped (languages/pkwycompliance.pot); translations load on init.
+- Plugin header states the minimum WordPress (5.6) and PHP (7.4). Tests run on GitHub on PHP 7.4, 8.1, 8.3 and 8.4.
+
 ## 1.2.0
 
 - Admin notice on every admin screen when the consent field is not usable, linking to Settings, Compliance. Stronger when the Privacy Policy URL is missing, softer when only the site wording is the problem.
