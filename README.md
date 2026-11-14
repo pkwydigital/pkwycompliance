@@ -8,6 +8,17 @@ The first component adds a marketing consent field to **WPForms** and **Gravity 
 
 Consent text copied onto each form drifts. One form says something slightly different from the next, nobody notices, and the record of what somebody agreed to becomes unreliable. This keeps the wording, the Privacy Policy link and the Terms link in a single setting, and every form that uses the field shows the same thing by default.
 
+## Setting it up
+
+The short version, in the order it should be done on a site.
+
+1. **Install and activate** the plugin (see Install below). It updates itself from then on.
+2. **Settings, Compliance.** Fill in the company name, the Privacy Policy URL and, only if the site has one, the Terms URL. Under the Privacy Policy URL the screen names the page it links to, offers the page set under Settings, Privacy if the box is empty, and warns when the two differ: check the name is really the privacy policy. Edit the wording, then read the Preview and click Save Changes. The red warning on that screen, and the yellow one across wp-admin, go away once it is usable.
+3. **Add the field** to each form that sends people to a mailing list: **Consent** in WPForms (Fancy Fields), **PKWY Consent** in Gravity Forms (Advanced Fields). One per form. Tick **Optional** (WPForms) or untick **Required** (Gravity Forms) when the form must still be sendable without agreeing to marketing, which is usually the case for an enquiry form.
+4. **Make Mailchimp depend on it.** Ticking the box changes nothing in Mailchimp by itself. Open the form's Mailchimp connections. On every connection that subscribes people, keep any rules already there and add **Consent is not empty** to each rule group, using **And** inside the group. Do not use Add New Group for it: a new group is an "or", so people who did not tick would still be subscribed through the other groups. A connection with no rules: turn on conditional logic with just that one rule. On Gravity Forms the rule is **Consent is agreed**.
+5. **Check it.** Settings, Compliance lists every form with the field and says, for each Mailchimp connection, whether it only takes people who ticked the box. Anything in red still needs step 4. Connections that do not subscribe anyone (recording an event, for example) are left for a person to judge.
+6. **Do not send test enquiries through a live form.** A real submission reaches everything the form is connected to: notification emails, CRMs, ad conversion tracking. Check with the form's Preview instead, and look at the first real entries afterwards: the Consent column reads `agreed` when ticked and is blank when not.
+
 ## Install
 
 Download the latest release and install it like any other plugin, or drop the folder in `wp-content/plugins/pkwycompliance`.
@@ -56,14 +67,13 @@ Deleting the plugin from the Plugins screen removes its settings (on every site 
 
 ## Development
 
-Pure logic lives in `includes/components/consent/logic.php` and `includes/updater.php`, with no WordPress dependency, so it is testable from a terminal:
+Pure logic lives in `includes/components/consent/logic.php`, `includes/components/consent/audit.php` and `includes/updater.php`, with no WordPress dependency, so it is testable from a terminal:
 
 ```bash
-php tests/test-consent.php
-php tests/test-updater.php
-php tests/test-uninstall.php
-php tests/test-gf-signatures.php
+bash tests/run-all.sh
 ```
+
+GitHub runs the same on every push, on PHP 7.4, 8.1, 8.3 and 8.4.
 
 Adapters translate that logic into each form plugin's API and hold no decisions of their own.
 

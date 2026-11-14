@@ -29,15 +29,98 @@ function pkwyc_settings() {
 
 function pkwyc_settings_menu() {
 
-	add_options_page(
+	$hook = add_options_page(
 		__( 'Compliance', 'pkwycompliance' ),
 		__( 'Compliance', 'pkwycompliance' ),
 		'manage_options',
 		PKWYC_SLUG,
 		'pkwyc_settings_page'
 	);
+
+	if ( $hook ) {
+		add_action( 'load-' . $hook, 'pkwyc_settings_help' );
+	}
 }
 add_action( 'admin_menu', 'pkwyc_settings_menu' );
+
+/**
+ * The full setup guide: the README section on GitHub. The plugin is public, so
+ * it cannot link to any client's own guide.
+ */
+function pkwyc_guide_url() {
+	return 'https://github.com/pkwydigital/pkwycompliance#setting-it-up';
+}
+
+/**
+ * The Help tabs on Settings, Compliance (the Help pull-down, top right).
+ *
+ * @return array array( array( 'id', 'title', 'content' ) )
+ */
+function pkwyc_help_tabs() {
+
+	$p = function ( $text ) {
+		return '<p>' . $text . '</p>';
+	};
+
+	$refuses = '';
+	foreach ( array( 'no_privacy_url', 'no_wording', 'terms_without_url' ) as $problem ) {
+		$refuses .= '<li>' . pkwyc_consent_config_problem_message( $problem ) . '</li>';
+	}
+
+	return array(
+		array(
+			'id'      => 'pkwyc-what',
+			'title'   => __( 'What it does', 'pkwycompliance' ),
+			'content' => $p( esc_html__( 'Adds a marketing consent checkbox to WPForms and Gravity Forms. The wording and the Privacy Policy and Terms links are set once, on this screen, and every form using the field shows them. The box is never ticked in advance. An entry records agreed when it was ticked and a blank when it was not.', 'pkwycompliance' ) )
+				. $p( esc_html__( 'The field records the answer. It does not, by itself, stop anyone being added to a mailing list: see the Mailchimp tab.', 'pkwycompliance' ) ),
+		),
+		array(
+			'id'      => 'pkwyc-add',
+			'title'   => __( 'Adding the field', 'pkwycompliance' ),
+			'content' => $p( esc_html__( 'In WPForms, add Consent from Fancy Fields. In Gravity Forms, add PKWY Consent from Advanced Fields (not Gravity Forms\' own Consent field, which does not use this wording). One per form.', 'pkwycompliance' ) )
+				. $p( esc_html__( 'It is required by default: the form cannot be sent unless the box is ticked. For an enquiry form that must still work without agreeing to marketing, tick Optional (WPForms) or untick Required (Gravity Forms). Custom wording in the field options replaces the site wording on that form only; such forms are listed at the bottom of this screen.', 'pkwycompliance' ) ),
+		),
+		array(
+			'id'      => 'pkwyc-mailchimp',
+			'title'   => __( 'Mailchimp', 'pkwycompliance' ),
+			'content' => $p( esc_html__( 'Ticking the box changes nothing in Mailchimp on its own. Open the form\'s Mailchimp connections. On every connection that subscribes people, keep the rules already there and add Consent is not empty to each rule group, using And inside the group. Do not use Add New Group for it: groups are joined by or, so people who did not tick would still get through another group. A connection with no rules needs conditional logic turned on with just that one rule. In Gravity Forms the rule is Consent is agreed.', 'pkwycompliance' ) )
+				. $p( esc_html__( 'The Forms with the Consent field table on this screen checks every connection and shows in red any that would still subscribe people who did not tick.', 'pkwycompliance' ) ),
+		),
+		array(
+			'id'      => 'pkwyc-refuses',
+			'title'   => __( 'Why a form refuses to submit', 'pkwycompliance' ),
+			'content' => $p( esc_html__( 'A form carrying the field will not submit while the settings here are not usable. That is deliberate: it is better than asking somebody to agree to documents they cannot open. The reasons are:', 'pkwycompliance' ) )
+				. '<ul>' . $refuses . '</ul>'
+				. $p( esc_html__( 'A missing Privacy Policy URL stops every form with the field. A problem with the site wording stops only forms that use it; forms with their own custom wording keep working.', 'pkwycompliance' ) ),
+		),
+		array(
+			'id'      => 'pkwyc-switches',
+			'title'   => __( 'Emergency switches', 'pkwycompliance' ),
+			'content' => $p( esc_html__( 'The plugin updates itself. Two lines in wp-config.php change that, for when something goes wrong:', 'pkwycompliance' ) )
+				. "<pre>define( 'PKWYC_NO_AUTO_UPDATE', true );\ndefine( 'PKWYC_DISABLE', true );</pre>"
+				. $p( esc_html__( 'The first keeps the plugin as it is and stops automatic updates; updates still show on the Plugins screen to apply by hand. The second stops the plugin enforcing anything, so forms submit with or without the box, and shows a warning across wp-admin so the site does not look like it is working normally.', 'pkwycompliance' ) ),
+		),
+	);
+}
+
+/**
+ * Register the Help tabs when Settings, Compliance loads.
+ */
+function pkwyc_settings_help() {
+
+	$screen = get_current_screen();
+	if ( ! $screen ) {
+		return;
+	}
+
+	foreach ( pkwyc_help_tabs() as $tab ) {
+		$screen->add_help_tab( $tab );
+	}
+
+	$screen->set_help_sidebar(
+		'<p><strong>' . esc_html__( 'More', 'pkwycompliance' ) . '</strong></p><p><a href="' . esc_url( pkwyc_guide_url() ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Full setup guide', 'pkwycompliance' ) . '</a></p>'
+	);
+}
 
 function pkwyc_settings_register() {
 
@@ -69,6 +152,13 @@ function pkwyc_settings_page() {
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Compliance', 'pkwycompliance' ); ?></h1>
+		<p><?php
+		printf(
+			/* translators: %s: link to the setup guide */
+			esc_html__( 'New to this? Open Help at the top right, or read the %s.', 'pkwycompliance' ),
+			'<a href="' . esc_url( pkwyc_guide_url() ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'setup guide', 'pkwycompliance' ) . '</a>'
+		);
+		?></p>
 
 		<?php if ( $problem !== '' ) : ?>
 			<div class="notice notice-error inline">
