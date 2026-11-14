@@ -36,6 +36,7 @@ define( 'PKWYC_UPDATE_TRANSIENT', 'pkwyc_latest_release' );
 require_once PKWYC_PATH . 'includes/updater.php';
 require_once PKWYC_PATH . 'includes/settings.php';
 require_once PKWYC_PATH . 'includes/components/consent/logic.php';
+require_once PKWYC_PATH . 'includes/components/consent/audit.php';
 
 /**
  * The components this plugin provides.
