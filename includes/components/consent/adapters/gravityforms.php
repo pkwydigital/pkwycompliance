@@ -194,7 +194,7 @@ function pkwyc_consent_gf_wording_setting( $position, $form_id ) {
 		<p class="description"><?php esc_html_e( 'Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out.', 'pkwycompliance' ); ?></p>
 		<p class="description pkwyc-mailchimp-hint" style="color:#996800"><?php
 			$pkwyc_feeds = ( class_exists( 'GFMailChimp' ) && class_exists( 'GFAPI' ) ) ? GFAPI::get_feeds( null, absint( $form_id ), 'gravityformsmailchimp' ) : array();
-			echo esc_html( pkwyc_consent_mailchimp_hint( ! is_wp_error( $pkwyc_feeds ) && ! empty( $pkwyc_feeds ) ) );
+			echo esc_html( pkwyc_consent_mailchimp_hint( ! is_wp_error( $pkwyc_feeds ) && ! empty( $pkwyc_feeds ), 'gravityforms' ) );
 		?></p>
 	</li>
 	<?php

@@ -79,7 +79,7 @@ Adapters translate that logic into each form plugin's API and hold no decisions 
 
 ## Requirements
 
-WordPress 5.6 or later, PHP 7.4 or later, and at least one of WPForms or Gravity Forms.
+WordPress 5.6 or later, PHP 7.4 or later, and at least one of WPForms or Gravity Forms (3.0 or later: older Gravity Forms versions do not stop a second Consent field being added).
 
 ## Licence
 

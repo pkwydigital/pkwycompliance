@@ -250,7 +250,8 @@ function pkwyc_consent_wpforms_overrides( $found ) {
 
 	$forms = wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) );
 
-	foreach ( (array) $forms as $form ) {
+	// get() returns false, not an empty array, when there are no forms.
+	foreach ( is_array( $forms ) ? $forms : array() as $form ) {
 		$data = wpforms_decode( $form->post_content );
 		if ( empty( $data['fields'] ) ) {
 			continue;
@@ -283,7 +284,9 @@ function pkwyc_consent_wpforms_report( $rows ) {
 		return $rows;
 	}
 
-	foreach ( (array) wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) ) as $form ) {
+	$forms = wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) );
+
+	foreach ( is_array( $forms ) ? $forms : array() as $form ) {
 		$report = pkwyc_audit_wpforms_form( wpforms_decode( $form->post_content ) );
 		if ( $report === null ) {
 			continue;
@@ -362,7 +365,11 @@ function pkwyc_consent_wpforms_record( $fields, $entry, $form_data, $entry_id ) 
 		if ( $record['wording'] === '' ) {
 			return;
 		}
-		wpforms()->obj( 'entry_meta' )->add(
+		$meta = wpforms()->obj( 'entry_meta' );
+		if ( ! $meta ) {
+			return;
+		}
+		$meta->add(
 			array(
 				'entry_id' => absint( $entry_id ),
 				'form_id'  => absint( isset( $form_data['id'] ) ? $form_data['id'] : 0 ),
@@ -393,7 +400,11 @@ function pkwyc_consent_wpforms_entry_box( $entry, $form_data ) {
 		return;
 	}
 
-	$meta = wpforms()->obj( 'entry_meta' )->get_meta(
+	$handler = wpforms()->obj( 'entry_meta' );
+	if ( ! $handler ) {
+		return;
+	}
+	$meta = $handler->get_meta(
 		array(
 			'entry_id' => absint( $entry->entry_id ),
 			'type'     => 'pkwyc_consent_record',

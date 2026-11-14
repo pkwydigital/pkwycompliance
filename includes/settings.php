@@ -320,8 +320,14 @@ function pkwyc_settings_privacy_page_hint( $plugin_url ) {
 	if ( trim( (string) $plugin_url ) !== '' ) {
 		$own_id = url_to_postid( $plugin_url );
 		if ( $own_id > 0 ) {
+			$status = get_post_status( $own_id );
+			$note   = $status === 'publish' ? '' : ' ' . sprintf(
+				/* translators: %s: post status such as draft or private */
+				esc_html__( '(%s: visitors cannot open it)', 'pkwycompliance' ),
+				esc_html( (string) $status )
+			);
 			/* translators: %s: page title, linked */
-			echo '<p class="description pkwyc-privacy-names">' . sprintf( esc_html__( 'This links to the page: %s', 'pkwycompliance' ), $link( $plugin_url, get_the_title( $own_id ) ) ) . '</p>';
+			echo '<p class="description pkwyc-privacy-names">' . sprintf( esc_html__( 'This links to the page: %s', 'pkwycompliance' ), $link( $plugin_url, get_the_title( $own_id ) ) ) . $note . '</p>';
 		} else {
 			echo '<p class="description pkwyc-privacy-names">' . esc_html__( 'This is not a page on this site. Open it to check it is the privacy policy.', 'pkwycompliance' ) . '</p>';
 		}
@@ -329,11 +335,11 @@ function pkwyc_settings_privacy_page_hint( $plugin_url ) {
 
 	if ( $advice['state'] === 'suggest' ) {
 		printf(
-			'<p class="description pkwyc-privacy-suggest">%s <button type="button" class="button button-small" onclick="document.getElementById(\'pkwyc_privacy\').value=%s;this.parentNode.lastChild.textContent=\' %s\';">%s</button><span></span></p>',
+			'<p class="description pkwyc-privacy-suggest">%s <button type="button" class="button button-small" onclick="document.getElementById(\'pkwyc_privacy\').value=%s;this.parentNode.lastChild.textContent=%s;">%s</button><span></span></p>',
 			/* translators: %s: page title, linked */
 			sprintf( esc_html__( 'WordPress has a privacy page set under Settings, Privacy: %s.', 'pkwycompliance' ), $link( $advice['url'], $advice['title'] ) ),
 			esc_attr( wp_json_encode( $advice['url'] ) ),
-			esc_attr__( 'Filled in. Check it is right, then Save Changes.', 'pkwycompliance' ),
+			esc_attr( wp_json_encode( ' ' . __( 'Filled in. Check it is right, then Save Changes.', 'pkwycompliance' ) ) ),
 			esc_html__( 'Use this page', 'pkwycompliance' )
 		);
 	} elseif ( $advice['state'] === 'differs' ) {

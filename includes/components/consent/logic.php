@@ -356,7 +356,13 @@ function pkwyc_privacy_page_advice( $plugin_url, $wp_page ) {
  *
  * @param bool $has_mailchimp Does this form already send people to Mailchimp?
  */
-function pkwyc_consent_mailchimp_hint( $has_mailchimp ) {
+function pkwyc_consent_mailchimp_hint( $has_mailchimp, $platform = 'wpforms' ) {
+	if ( $platform === 'gravityforms' ) {
+		if ( $has_mailchimp ) {
+			return __( 'This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: on every Mailchimp feed that subscribes people, turn on the condition and require Consent is agreed. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
+		}
+		return __( 'If this form is later connected to Mailchimp, give every feed that subscribes people the condition Consent is agreed, or the box will make no difference.', 'pkwycompliance' );
+	}
 	if ( $has_mailchimp ) {
 		return __( 'This form sends people to Mailchimp. Ticking this box does nothing to Mailchimp on its own: open the form\'s Mailchimp connections and, on every one that subscribes people, add Consent is not empty to each rule group. Settings, Compliance shows whether that is done.', 'pkwycompliance' );
 	}
@@ -394,9 +400,9 @@ function pkwyc_consent_record( $settings, $override, $now_iso8601, $version ) {
 function pkwyc_consent_record_html( $json ) {
 	$rec = json_decode( (string) $json, true );
 	if ( ! is_array( $rec ) || ! isset( $rec['wording'] ) ) {
-		return '<p>' . esc_html__( 'Not recorded. The entry was made before PKWY Compliance 1.3.0, which started keeping the wording with each entry.', 'pkwycompliance' ) . '</p>';
+		return '<p>' . esc_html__( 'No wording was recorded with this entry (made before 1.3.0, or while the plugin was switched off).', 'pkwycompliance' ) . '</p>';
 	}
-	return '<p>' . esc_html__( 'Wording shown beside the Consent box when this entry was sent:', 'pkwycompliance' ) . '</p>'
+	return '<p>' . esc_html__( 'Consent wording in effect when this entry was received:', 'pkwycompliance' ) . '</p>'
 		. '<blockquote style="margin:0 0 8px;padding:8px 12px;border-left:3px solid #c3c4c7;background:#f6f7f7">' . wp_kses_post( $rec['wording'] ) . '</blockquote>'
 		. '<p class="description">' . sprintf(
 			/* translators: 1: date and time, 2: plugin version */
@@ -428,4 +434,13 @@ function pkwyc_kill_switch_relax_gf_form( $form ) {
 		}
 	}
 	return $form;
+}
+
+/**
+ * The Gravity Forms filters the emergency switch uses. Never the form editor's
+ * own (gform_admin_pre_render): saving a form there while the switch is on
+ * would store the Consent field as optional for good.
+ */
+function pkwyc_kill_switch_gf_hooks() {
+	return array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' );
 }

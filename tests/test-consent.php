@@ -183,8 +183,9 @@ pkwyc_assert( 'record: exactly four keys', array_keys( $rec ), array( 'wording',
 $shown = pkwyc_consent_record_html( json_encode( $rec ) );
 pkwyc_assert( 'record html: shows the wording', strpos( $shown, $rec['wording'] ) !== false, true );
 pkwyc_assert( 'record html: shows when and which version', strpos( $shown, '2026-11-13T15:00:00+00:00' ) !== false && strpos( $shown, '1.3.0' ) !== false, true );
-pkwyc_assert( 'record html: old entry says not recorded', strpos( pkwyc_consent_record_html( '' ), 'Not recorded' ) !== false, true );
-pkwyc_assert( 'record html: broken data says not recorded', strpos( pkwyc_consent_record_html( '{oops' ), 'Not recorded' ) !== false, true );
+pkwyc_assert( 'record html: no record names both reasons', strpos( pkwyc_consent_record_html( '' ), 'made before 1.3.0, or while the plugin was switched off' ) !== false, true );
+pkwyc_assert( 'record html: broken data treated as no record', strpos( pkwyc_consent_record_html( '{oops' ), 'No wording was recorded' ) !== false, true );
+pkwyc_assert( 'record html: says in effect when received, not what was seen', strpos( $shown, 'in effect when this entry was received' ) !== false, true );
 
 // --- the emergency switch on Gravity Forms -------------------------------
 // With PKWYC_DISABLE set the field class is not loaded, so Gravity Forms
@@ -199,5 +200,15 @@ pkwyc_assert( 'switch: consent field no longer required', $relaxed['fields'][1]-
 pkwyc_assert( 'switch: other required fields untouched', $relaxed['fields'][0]->isRequired, true );
 pkwyc_assert( 'switch: form without fields passes through', pkwyc_kill_switch_relax_gf_form( array( 'title' => 'x' ) ), array( 'title' => 'x' ) );
 pkwyc_assert( 'switch: non-array passes through', pkwyc_kill_switch_relax_gf_form( false ), false );
+
+// Review fix: the kill switch must never touch the form editor, or saving a
+// form while it is on would store the Consent field as optional for good.
+pkwyc_assert( 'switch hooks: front end and validation only', pkwyc_kill_switch_gf_hooks(), array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' ) );
+
+// Review fix: Gravity Forms has no "is not empty"; its rule is "is agreed".
+pkwyc_assert( 'gf hint names the gravity forms rule', strpos( pkwyc_consent_mailchimp_hint( true, 'gravityforms' ), 'Consent is agreed' ) !== false, true );
+pkwyc_assert( 'gf hint does not name the wpforms rule', strpos( pkwyc_consent_mailchimp_hint( true, 'gravityforms' ), 'not empty' ), false );
+pkwyc_assert( 'gf hint without Mailchimp names the gravity forms rule', strpos( pkwyc_consent_mailchimp_hint( false, 'gravityforms' ), 'Consent is agreed' ) !== false, true );
+pkwyc_assert( 'wpforms is the default platform', pkwyc_consent_mailchimp_hint( true ), pkwyc_consent_mailchimp_hint( true, 'wpforms' ) );
 
 pkwyc_results();
