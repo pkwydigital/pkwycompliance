@@ -69,4 +69,35 @@ foreach ( array( 'gated', 'partial', 'ungated', 'not_subscribe' ) as $status ) {
 	pkwyc_assert( "label for {$status}", pkwyc_audit_status_label( $status ) !== '', true );
 }
 
+// --- one form's report ---------------------------------------------------
+$form_data = array(
+	'fields'    => array(
+		'1'  => array( 'id' => '1', 'type' => 'name' ),
+		'12' => array( 'id' => '12', 'type' => 'pkwyc_consent' ),
+	),
+	'providers' => array(
+		'mailchimpv3' => array(
+			'conn_a' => pkwyc_t_conn( array( array( $area, $consent_rule ) ) ),
+			'conn_b' => array_merge( pkwyc_t_conn( array() ), array( 'connection_name' => 'Event', 'action' => 'record_event' ) ),
+		),
+		'constant-contact-v3' => array(),
+	),
+);
+$report = pkwyc_audit_wpforms_form( $form_data );
+pkwyc_assert( 'form report: consent field found', $report['consent_field_id'], '12' );
+pkwyc_assert( 'form report: one row per Mailchimp connection', count( $report['connections'] ), 2 );
+pkwyc_assert( 'form report: connection name and status', $report['connections'][0], array( 'id' => 'conn_a', 'name' => 'Lead', 'status' => 'gated' ) );
+pkwyc_assert( 'form report: record event left for a person', $report['connections'][1]['status'], 'not_subscribe' );
+pkwyc_assert( 'form without Consent: no report', pkwyc_audit_wpforms_form( array( 'fields' => array( array( 'id' => '1', 'type' => 'name' ) ) ) ), null );
+pkwyc_assert( 'form with Consent and no Mailchimp: empty connections', pkwyc_audit_wpforms_form( array( 'fields' => array( array( 'id' => '4', 'type' => 'pkwyc_consent' ) ) ) )['connections'], array() );
+pkwyc_assert( 'connection with no name falls back to its id', pkwyc_audit_wpforms_form( array( 'fields' => array( array( 'id' => '12', 'type' => 'pkwyc_consent' ) ), 'providers' => array( 'mailchimpv3' => array( 'c9' => array( 'action' => 'subscribe' ) ) ) ) )['connections'][0]['name'], 'c9' );
+
+$gf_feeds = array(
+	array( 'id' => 5, 'is_active' => '1', 'meta' => array_merge( pkwyc_t_feed( array( $gf_consent ) ), array( 'feedName' => 'Newsletter' ) ) ),
+	array( 'id' => 6, 'is_active' => '0', 'meta' => array( 'feedName' => 'Old' ) ),
+);
+$gf_rows = pkwyc_audit_gf_connections( $gf_feeds, '12' );
+pkwyc_assert( 'gf report: active feeds only', count( $gf_rows ), 1 );
+pkwyc_assert( 'gf report: feed name and status', $gf_rows[0], array( 'id' => '5', 'name' => 'Newsletter', 'status' => 'gated' ) );
+
 pkwyc_results();

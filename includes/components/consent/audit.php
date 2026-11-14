@@ -139,6 +139,67 @@ function pkwyc_audit_gf_feed( $feed_meta, $consent_field_id ) {
 }
 
 /**
+ * One WPForms form: its Consent field and the status of each Mailchimp connection.
+ *
+ * @param array $form_data Decoded form post_content.
+ * @return array|null array( 'consent_field_id' => string, 'connections' => array( array( 'id', 'name', 'status' ) ) ), or null when the form has no Consent field.
+ */
+function pkwyc_audit_wpforms_form( $form_data ) {
+
+	$consent_id = '';
+	foreach ( ( isset( $form_data['fields'] ) && is_array( $form_data['fields'] ) ? $form_data['fields'] : array() ) as $field ) {
+		if ( isset( $field['type'], $field['id'] ) && $field['type'] === 'pkwyc_consent' ) {
+			$consent_id = (string) $field['id'];
+			break;
+		}
+	}
+	if ( $consent_id === '' ) {
+		return null;
+	}
+
+	$rows        = array();
+	$connections = isset( $form_data['providers']['mailchimpv3'] ) && is_array( $form_data['providers']['mailchimpv3'] ) ? $form_data['providers']['mailchimpv3'] : array();
+	foreach ( $connections as $id => $connection ) {
+		if ( ! is_array( $connection ) ) {
+			continue;
+		}
+		$name   = isset( $connection['connection_name'] ) ? trim( (string) $connection['connection_name'] ) : '';
+		$rows[] = array(
+			'id'     => (string) $id,
+			'name'   => $name !== '' ? $name : (string) $id,
+			'status' => pkwyc_audit_wpforms_connection( $connection, $consent_id ),
+		);
+	}
+
+	return array( 'consent_field_id' => $consent_id, 'connections' => $rows );
+}
+
+/**
+ * A Gravity Forms form's active Mailchimp feeds and their status.
+ *
+ * @param array  $feeds            Feeds as GFAPI::get_feeds() returns them.
+ * @param string $consent_field_id The form's Consent field id.
+ * @return array array( array( 'id', 'name', 'status' ) )
+ */
+function pkwyc_audit_gf_connections( $feeds, $consent_field_id ) {
+
+	$rows = array();
+	foreach ( is_array( $feeds ) ? $feeds : array() as $feed ) {
+		if ( ! is_array( $feed ) || empty( $feed['is_active'] ) ) {
+			continue;
+		}
+		$meta   = isset( $feed['meta'] ) && is_array( $feed['meta'] ) ? $feed['meta'] : array();
+		$name   = isset( $meta['feedName'] ) ? trim( (string) $meta['feedName'] ) : '';
+		$rows[] = array(
+			'id'     => (string) ( isset( $feed['id'] ) ? $feed['id'] : '' ),
+			'name'   => $name !== '' ? $name : (string) ( isset( $feed['id'] ) ? $feed['id'] : '' ),
+			'status' => pkwyc_audit_gf_feed( $meta, $consent_field_id ),
+		);
+	}
+	return $rows;
+}
+
+/**
  * The words shown for a status on the settings screen.
  */
 function pkwyc_audit_status_label( $status ) {

@@ -230,6 +230,53 @@ function pkwyc_consent_gf_overrides( $found ) {
 add_filter( 'pkwyc_consent_overrides', 'pkwyc_consent_gf_overrides' );
 
 /**
+ * Gravity Forms forms carrying the consent field, with each active Mailchimp
+ * feed's status, for the settings screen. Feeds are read only when the
+ * Gravity Forms Mailchimp add-on is active.
+ */
+function pkwyc_consent_gf_report( $rows ) {
+
+	if ( ! class_exists( 'GFAPI' ) ) {
+		return $rows;
+	}
+
+	$mailchimp = class_exists( 'GFMailChimp' );
+
+	foreach ( (array) GFAPI::get_forms() as $form ) {
+		$consent_id = '';
+		foreach ( (array) rgar( $form, 'fields' ) as $field ) {
+			if ( isset( $field->type ) && $field->type === 'pkwyc_consent' ) {
+				$consent_id = (string) $field->id;
+				break;
+			}
+		}
+		if ( $consent_id === '' ) {
+			continue;
+		}
+
+		$form_id     = absint( rgar( $form, 'id' ) );
+		$connections = array();
+		if ( $mailchimp ) {
+			$feeds = GFAPI::get_feeds( null, $form_id, 'gravityformsmailchimp' );
+			foreach ( pkwyc_audit_gf_connections( is_wp_error( $feeds ) ? array() : $feeds, $consent_id ) as $c ) {
+				$c['edit_url']  = admin_url( 'admin.php?page=gf_edit_forms&view=settings&subview=gravityformsmailchimp&id=' . $form_id . '&fid=' . absint( $c['id'] ) );
+				$connections[] = $c;
+			}
+		}
+
+		$rows[] = array(
+			'platform'    => 'Gravity Forms',
+			'title'       => rgar( $form, 'title' ),
+			'edit_url'    => admin_url( 'admin.php?page=gf_edit_forms&id=' . $form_id ),
+			'connections' => $connections,
+		);
+	}
+
+	return $rows;
+}
+add_filter( 'pkwyc_consent_forms_report', 'pkwyc_consent_gf_report' );
+
+/**
  * Re-pin the label placement at render, in case a form was saved with it changed.
  *
  * Required is deliberately not re-pinned. It starts on for a new field (see the

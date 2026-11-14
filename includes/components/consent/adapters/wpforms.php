@@ -254,6 +254,37 @@ function pkwyc_consent_wpforms_overrides( $found ) {
 add_filter( 'pkwyc_consent_overrides', 'pkwyc_consent_wpforms_overrides' );
 
 /**
+ * WPForms forms carrying the consent field, with each Mailchimp connection's
+ * status, for the "Forms with the Consent field" table on the settings screen.
+ */
+function pkwyc_consent_wpforms_report( $rows ) {
+
+	if ( ! function_exists( 'wpforms' ) || ! function_exists( 'wpforms_decode' ) ) {
+		return $rows;
+	}
+
+	foreach ( (array) wpforms()->obj( 'form' )->get( '', array( 'posts_per_page' => -1 ) ) as $form ) {
+		$report = pkwyc_audit_wpforms_form( wpforms_decode( $form->post_content ) );
+		if ( $report === null ) {
+			continue;
+		}
+		$panel = admin_url( 'admin.php?page=wpforms-builder&view=providers&form_id=' . absint( $form->ID ) );
+		foreach ( $report['connections'] as $i => $c ) {
+			$report['connections'][ $i ]['edit_url'] = $panel;
+		}
+		$rows[] = array(
+			'platform'    => 'WPForms',
+			'title'       => $form->post_title,
+			'edit_url'    => admin_url( 'admin.php?page=wpforms-builder&view=fields&form_id=' . absint( $form->ID ) ),
+			'connections' => $report['connections'],
+		);
+	}
+
+	return $rows;
+}
+add_filter( 'pkwyc_consent_forms_report', 'pkwyc_consent_wpforms_report' );
+
+/**
  * Let the consent field drive conditional logic: Mailchimp connections,
  * notifications, confirmations, and showing or hiding other fields. It joins as
  * a text-like field, so a rule reads "Consent is not empty" (ticked) or

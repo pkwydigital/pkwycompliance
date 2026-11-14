@@ -132,6 +132,10 @@ function pkwyc_settings_page() {
 			<?php submit_button(); ?>
 		</form>
 
+		<h2><?php esc_html_e( 'Forms with the Consent field', 'pkwycompliance' ); ?></h2>
+		<p class="description" style="max-width:40em"><?php esc_html_e( 'Ticking the box changes nothing in Mailchimp by itself. Every Mailchimp connection that subscribes people needs Consent is not empty added to each of its rule groups. This table checks that for you.', 'pkwycompliance' ); ?></p>
+		<?php pkwyc_settings_forms_report(); ?>
+
 		<h2><?php esc_html_e( 'Forms with custom wording', 'pkwycompliance' ); ?></h2>
 		<?php
 		$overrides = apply_filters( 'pkwyc_consent_overrides', array() );
@@ -155,6 +159,49 @@ function pkwyc_settings_page() {
 		?>
 	</div>
 	<?php
+}
+
+/**
+ * The "Forms with the Consent field" table: each form using the field and
+ * whether each of its Mailchimp connections only takes people who ticked.
+ */
+function pkwyc_settings_forms_report() {
+
+	$rows = apply_filters( 'pkwyc_consent_forms_report', array() );
+
+	if ( empty( $rows ) ) {
+		echo '<p>' . esc_html__( 'No form uses the Consent field yet.', 'pkwycompliance' ) . '</p>';
+		return;
+	}
+
+	echo '<table class="widefat striped pkwyc-forms-report" style="max-width:60em"><thead><tr><th>' . esc_html__( 'Form', 'pkwycompliance' ) . '</th><th>' . esc_html__( 'Mailchimp', 'pkwycompliance' ) . '</th></tr></thead><tbody>';
+
+	foreach ( $rows as $row ) {
+		$cell = '';
+		if ( empty( $row['connections'] ) ) {
+			$cell = esc_html__( 'No Mailchimp connection.', 'pkwycompliance' );
+		}
+		foreach ( $row['connections'] as $c ) {
+			$bad   = in_array( $c['status'], array( 'ungated', 'partial' ), true );
+			$cell .= sprintf(
+				'<p class="pkwyc-status-%s" style="margin:0 0 6px;%s"><a href="%s"><strong>%s</strong></a>: %s</p>',
+				esc_attr( $c['status'] ),
+				$bad ? 'color:#b32d2e' : ( $c['status'] === 'gated' ? 'color:#007017' : '' ),
+				esc_url( $c['edit_url'] ),
+				esc_html( $c['name'] ),
+				esc_html( pkwyc_audit_status_label( $c['status'] ) )
+			);
+		}
+		printf(
+			'<tr><td><a href="%s">%s</a><br><span class="description">%s</span></td><td>%s</td></tr>',
+			esc_url( $row['edit_url'] ),
+			esc_html( $row['title'] ),
+			esc_html( $row['platform'] ),
+			$cell
+		);
+	}
+
+	echo '</tbody></table>';
 }
 
 /**
