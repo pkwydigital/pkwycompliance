@@ -168,4 +168,22 @@ pkwyc_assert( 'hint when the form sends to Mailchimp says it does nothing alone'
 pkwyc_assert( 'hint without Mailchimp is about a later connection', strpos( pkwyc_consent_mailchimp_hint( false ), 'If this form is later connected to Mailchimp' ) === 0, true );
 pkwyc_assert( 'the two hints differ', pkwyc_consent_mailchimp_hint( true ) !== pkwyc_consent_mailchimp_hint( false ), true );
 
+// --- the record kept with each entry --------------------------------------
+$rec = pkwyc_consent_record( $good, '', '2026-11-13T15:00:00+00:00', '1.3.0' );
+pkwyc_assert( 'record: wording is exactly what was shown', $rec['wording'], pkwyc_consent_wording_html( pkwyc_consent_effective_settings( $good, '' ) ) );
+pkwyc_assert( 'record: hash is sha256 of the wording', $rec['hash'], hash( 'sha256', $rec['wording'] ) );
+pkwyc_assert( 'record: time passed through', $rec['recorded_at'], '2026-11-13T15:00:00+00:00' );
+pkwyc_assert( 'record: plugin version passed through', $rec['plugin_version'], '1.3.0' );
+$rec_custom = pkwyc_consent_record( $good, 'Custom {company} text.', '2026-11-13T15:00:00+00:00', '1.3.0' );
+pkwyc_assert( 'record: custom wording is what is recorded', strpos( $rec_custom['wording'], 'Custom Example Law Group text.' ) === 0, true );
+pkwyc_assert( 'record: custom wording changes the hash', $rec_custom['hash'] !== $rec['hash'], true );
+pkwyc_assert( 'record: unusable settings record no wording', pkwyc_consent_record( array_merge( $good, array( 'privacy_url' => '' ) ), '', 'x', '1.3.0' )['wording'], '' );
+pkwyc_assert( 'record: exactly four keys', array_keys( $rec ), array( 'wording', 'hash', 'recorded_at', 'plugin_version' ) );
+
+$shown = pkwyc_consent_record_html( json_encode( $rec ) );
+pkwyc_assert( 'record html: shows the wording', strpos( $shown, $rec['wording'] ) !== false, true );
+pkwyc_assert( 'record html: shows when and which version', strpos( $shown, '2026-11-13T15:00:00+00:00' ) !== false && strpos( $shown, '1.3.0' ) !== false, true );
+pkwyc_assert( 'record html: old entry says not recorded', strpos( pkwyc_consent_record_html( '' ), 'Not recorded' ) !== false, true );
+pkwyc_assert( 'record html: broken data says not recorded', strpos( pkwyc_consent_record_html( '{oops' ), 'Not recorded' ) !== false, true );
+
 pkwyc_results();

@@ -343,3 +343,67 @@ function pkwyc_consent_wpforms_single( $form_data ) {
 	return $form_data;
 }
 add_filter( 'wpforms_frontend_form_data', 'pkwyc_consent_wpforms_single' );
+
+/**
+ * Keep the exact wording shown with every entry from a form carrying the field,
+ * ticked or not. WPForms Pro stores entries; Lite does not, and passes no id.
+ */
+function pkwyc_consent_wpforms_record( $fields, $entry, $form_data, $entry_id ) {
+
+	if ( ! $entry_id || ! function_exists( 'wpforms' ) || empty( $form_data['fields'] ) ) {
+		return;
+	}
+
+	foreach ( $form_data['fields'] as $field ) {
+		if ( ! isset( $field['type'] ) || $field['type'] !== 'pkwyc_consent' ) {
+			continue;
+		}
+		$record = pkwyc_consent_record( pkwyc_settings(), isset( $field['pkwyc_wording'] ) ? $field['pkwyc_wording'] : '', gmdate( 'c' ), PKWYC_VERSION );
+		if ( $record['wording'] === '' ) {
+			return;
+		}
+		wpforms()->obj( 'entry_meta' )->add(
+			array(
+				'entry_id' => absint( $entry_id ),
+				'form_id'  => absint( isset( $form_data['id'] ) ? $form_data['id'] : 0 ),
+				'user_id'  => get_current_user_id(),
+				'type'     => 'pkwyc_consent_record',
+				'data'     => wp_json_encode( $record ),
+			),
+			'entry_meta'
+		);
+		return;
+	}
+}
+add_action( 'wpforms_process_entry_saved', 'pkwyc_consent_wpforms_record', 10, 4 );
+
+/**
+ * Show the recorded wording on the single entry screen.
+ */
+function pkwyc_consent_wpforms_entry_box( $entry, $form_data ) {
+
+	$has = false;
+	foreach ( (array) ( isset( $form_data['fields'] ) ? $form_data['fields'] : array() ) as $field ) {
+		if ( isset( $field['type'] ) && $field['type'] === 'pkwyc_consent' ) {
+			$has = true;
+			break;
+		}
+	}
+	if ( ! $has || empty( $entry->entry_id ) ) {
+		return;
+	}
+
+	$meta = wpforms()->obj( 'entry_meta' )->get_meta(
+		array(
+			'entry_id' => absint( $entry->entry_id ),
+			'type'     => 'pkwyc_consent_record',
+			'number'   => 1,
+		)
+	);
+	$json = ! empty( $meta[0]->data ) ? $meta[0]->data : '';
+
+	echo '<div class="postbox pkwyc-consent-record"><div class="postbox-header"><h2 class="hndle"><span>' . esc_html__( 'Consent wording', 'pkwycompliance' ) . '</span></h2></div><div class="inside">'
+		. pkwyc_consent_record_html( $json ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+		. '</div></div>';
+}
+add_action( 'wpforms_entry_details_content', 'pkwyc_consent_wpforms_entry_box', 10, 2 );

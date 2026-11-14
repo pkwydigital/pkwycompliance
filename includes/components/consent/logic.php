@@ -362,3 +362,46 @@ function pkwyc_consent_mailchimp_hint( $has_mailchimp ) {
 	}
 	return __( 'If this form is later connected to Mailchimp, add Consent is not empty to every connection that subscribes people, or the box will make no difference.', 'pkwycompliance' );
 }
+
+/**
+ * What to keep with an entry so it can later show what the visitor was shown.
+ *
+ * The site wording can be edited at any time, and each form can override it,
+ * so the field's stored value ("agreed" or empty) alone cannot say what was
+ * agreed to. This keeps the exact sentence, with its links, beside the entry.
+ *
+ * @param array  $settings     Site settings.
+ * @param string $override     The form's custom wording, '' for the site wording.
+ * @param string $now_iso8601  When it was recorded.
+ * @param string $version      Plugin version.
+ * @return array array( 'wording', 'hash', 'recorded_at', 'plugin_version' )
+ */
+function pkwyc_consent_record( $settings, $override, $now_iso8601, $version ) {
+	$wording = pkwyc_consent_wording_html( pkwyc_consent_effective_settings( $settings, (string) $override ) );
+	return array(
+		'wording'        => $wording,
+		'hash'           => hash( 'sha256', $wording ),
+		'recorded_at'    => (string) $now_iso8601,
+		'plugin_version' => (string) $version,
+	);
+}
+
+/**
+ * The record kept with an entry, as shown on the entry screen.
+ *
+ * @param string $json The stored record, '' when the entry has none.
+ */
+function pkwyc_consent_record_html( $json ) {
+	$rec = json_decode( (string) $json, true );
+	if ( ! is_array( $rec ) || ! isset( $rec['wording'] ) ) {
+		return '<p>' . esc_html__( 'Not recorded. The entry was made before PKWY Compliance 1.3.0, which started keeping the wording with each entry.', 'pkwycompliance' ) . '</p>';
+	}
+	return '<p>' . esc_html__( 'Wording shown beside the Consent box when this entry was sent:', 'pkwycompliance' ) . '</p>'
+		. '<blockquote style="margin:0 0 8px;padding:8px 12px;border-left:3px solid #c3c4c7;background:#f6f7f7">' . wp_kses_post( $rec['wording'] ) . '</blockquote>'
+		. '<p class="description">' . sprintf(
+			/* translators: 1: date and time, 2: plugin version */
+			esc_html__( 'Recorded %1$s by PKWY Compliance %2$s.', 'pkwycompliance' ),
+			esc_html( isset( $rec['recorded_at'] ) ? $rec['recorded_at'] : '' ),
+			esc_html( isset( $rec['plugin_version'] ) ? $rec['plugin_version'] : '' )
+		) . '</p>';
+}

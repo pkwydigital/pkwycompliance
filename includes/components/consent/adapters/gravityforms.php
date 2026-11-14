@@ -343,3 +343,45 @@ function pkwyc_consent_gf_save_value( $value, $lead, $field, $form, $input_id ) 
 	return $value;
 }
 add_filter( 'gform_save_field_value', 'pkwyc_consent_gf_save_value', 10, 5 );
+
+/**
+ * Keep the exact wording shown with every entry from a form carrying the field.
+ */
+function pkwyc_consent_gf_record( $entry, $form ) {
+
+	foreach ( (array) rgar( $form, 'fields' ) as $field ) {
+		if ( ! isset( $field->type ) || $field->type !== 'pkwyc_consent' ) {
+			continue;
+		}
+		$record = pkwyc_consent_record( pkwyc_settings(), isset( $field->pkwycWording ) ? $field->pkwycWording : '', gmdate( 'c' ), PKWYC_VERSION );
+		if ( $record['wording'] !== '' ) {
+			gform_update_meta( absint( rgar( $entry, 'id' ) ), 'pkwyc_consent_record', wp_json_encode( $record ), absint( rgar( $form, 'id' ) ) );
+		}
+		return;
+	}
+}
+add_action( 'gform_entry_created', 'pkwyc_consent_gf_record', 10, 2 );
+
+/**
+ * Show the recorded wording on the entry detail screen.
+ */
+function pkwyc_consent_gf_entry_box( $meta_boxes, $entry, $form ) {
+
+	foreach ( (array) rgar( $form, 'fields' ) as $field ) {
+		if ( isset( $field->type ) && $field->type === 'pkwyc_consent' ) {
+			$meta_boxes['pkwyc_consent_record'] = array(
+				'title'    => esc_html__( 'Consent wording', 'pkwycompliance' ),
+				'callback' => 'pkwyc_consent_gf_entry_box_render',
+				'context'  => 'normal',
+			);
+			break;
+		}
+	}
+	return $meta_boxes;
+}
+add_filter( 'gform_entry_detail_meta_boxes', 'pkwyc_consent_gf_entry_box', 10, 3 );
+
+function pkwyc_consent_gf_entry_box_render( $args ) {
+	$json = gform_get_meta( absint( rgar( $args['entry'], 'id' ) ), 'pkwyc_consent_record' );
+	echo pkwyc_consent_record_html( is_string( $json ) ? $json : '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+}
