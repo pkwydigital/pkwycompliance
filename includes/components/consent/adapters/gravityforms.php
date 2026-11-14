@@ -38,14 +38,24 @@ function pkwyc_consent_gf_register() {
 		public $isRequired     = true;
 		public $labelPlacement = 'hidden_label';
 
+		/**
+		 * One Consent field per form. Gravity Forms refuses a second add with
+		 * its own message and leaves out the Duplicate button.
+		 */
+		public $duplicatable = false;
+
+		/**
+		 * "PKWY Consent", not "Consent": Gravity Forms has a built-in Consent
+		 * field in the same group, which carries none of the site wording.
+		 */
 		public function get_form_editor_field_title() {
-			return esc_html__( 'Consent', 'pkwycompliance' );
+			return esc_html__( 'PKWY Consent', 'pkwycompliance' );
 		}
 
 		public function get_form_editor_button() {
 			return array(
 				'group' => 'advanced_fields',
-				'text'  => esc_html__( 'Consent', 'pkwycompliance' ),
+				'text'  => esc_html__( 'PKWY Consent', 'pkwycompliance' ),
 			);
 		}
 
@@ -77,15 +87,12 @@ function pkwyc_consent_gf_register() {
 		}
 
 		/**
-		 * Block a second instance, and pin the defaults on add.
+		 * Pin the defaults on add. A second instance is blocked by $duplicatable.
 		 */
 		public function get_form_editor_inline_script_on_page_render() {
 
 			$script  = 'window.fieldSettings = window.fieldSettings || {};';
 			$script .= 'window.fieldSettings["pkwyc_consent"] = ".conditional_logic_field_setting,.error_message_setting,.label_setting,.label_placement_setting,.description_setting,.pkwyc_wording_setting,.css_class_setting,.visibility_setting,.rules_setting";';
-
-			$script .= 'gform.addFilter("gform_form_editor_can_field_be_added", function(canAdd, type){'
-				. 'if(type==="pkwyc_consent"){var has=false;jQuery("#gform_fields li").each(function(){if(jQuery(this).attr("data-type")==="pkwyc_consent"){has=true;}});return !has;}return canAdd;});';
 
 			$script .= 'gform.addFilter("gform_editor_js_set_default_values", function(field){'
 				. 'if(field.type==="pkwyc_consent"){field.label="Consent";field.isRequired=true;field.labelPlacement="hidden_label";}'

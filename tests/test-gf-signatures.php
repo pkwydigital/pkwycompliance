@@ -18,6 +18,7 @@
 require_once __DIR__ . '/bootstrap.php';
 
 class GF_Field {
+	public $duplicatable = true;
 	public $type;
 	public $label;
 	public $isRequired;
@@ -52,5 +53,19 @@ require_once __DIR__ . '/../includes/components/consent/adapters/gravityforms.ph
 pkwyc_assert( 'consent field class declared against GF_Field', class_exists( 'PKWYC_GF_Consent_Field', false ), true );
 pkwyc_assert( 'consent field registered', count( GF_Fields::$registered ), 1 );
 pkwyc_assert( 'registered field is the consent type', GF_Fields::$registered[0]->type, 'pkwyc_consent' );
+
+// One Consent field per form. Gravity Forms 3.x enforces this itself for any
+// field that is not duplicatable: it refuses a second add with its own message
+// and drops the Duplicate button. The old editor script looked for
+// "#gform_fields li[data-type]", which Gravity Forms 3.x no longer renders, so
+// it never blocked anything (found in a browser, 2026-11-13).
+pkwyc_assert( 'consent field is not duplicatable', GF_Fields::$registered[0]->duplicatable, false );
+pkwyc_assert( 'editor script does not rely on li[data-type]', strpos( GF_Fields::$registered[0]->get_form_editor_inline_script_on_page_render(), '#gform_fields li' ), false );
+
+// Gravity Forms has its own built-in field called Consent in the same
+// Advanced Fields group. Ours must be told apart from it in the editor.
+$pkwyc_button = GF_Fields::$registered[0]->get_form_editor_button();
+pkwyc_assert( 'editor button named apart from the built-in Consent field', $pkwyc_button['text'], 'PKWY Consent' );
+pkwyc_assert( 'editor field title named apart from the built-in Consent field', GF_Fields::$registered[0]->get_form_editor_field_title(), 'PKWY Consent' );
 
 pkwyc_results();
