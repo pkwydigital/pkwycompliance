@@ -405,3 +405,27 @@ function pkwyc_consent_record_html( $json ) {
 			esc_html( isset( $rec['plugin_version'] ) ? $rec['plugin_version'] : '' )
 		) . '</p>';
 }
+
+/**
+ * With the emergency switch on, let Gravity Forms submit forms that carry a
+ * Consent field.
+ *
+ * PKWYC_DISABLE stops the field class loading, so Gravity Forms falls back to
+ * a plain field for the stored type: it renders no box but is still required,
+ * and the form can never be sent. Clearing isRequired on those fields is all
+ * the switch keeps doing on Gravity Forms.
+ *
+ * @param array|mixed $form A Gravity Forms form array.
+ * @return array|mixed The form, with Consent fields made optional.
+ */
+function pkwyc_kill_switch_relax_gf_form( $form ) {
+	if ( ! is_array( $form ) || empty( $form['fields'] ) || ! is_array( $form['fields'] ) ) {
+		return $form;
+	}
+	foreach ( $form['fields'] as $field ) {
+		if ( is_object( $field ) && isset( $field->type ) && $field->type === 'pkwyc_consent' ) {
+			$field->isRequired = false;
+		}
+	}
+	return $form;
+}

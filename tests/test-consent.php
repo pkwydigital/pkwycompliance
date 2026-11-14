@@ -186,4 +186,18 @@ pkwyc_assert( 'record html: shows when and which version', strpos( $shown, '2026
 pkwyc_assert( 'record html: old entry says not recorded', strpos( pkwyc_consent_record_html( '' ), 'Not recorded' ) !== false, true );
 pkwyc_assert( 'record html: broken data says not recorded', strpos( pkwyc_consent_record_html( '{oops' ), 'Not recorded' ) !== false, true );
 
+// --- the emergency switch on Gravity Forms -------------------------------
+// With PKWYC_DISABLE set the field class is not loaded, so Gravity Forms
+// treats a stored Consent field as an unknown field that is still required
+// and has no box to tick: the form could never be sent (found 2026-11-13).
+$gf_form = array( 'fields' => array(
+	(object) array( 'type' => 'text', 'isRequired' => true ),
+	(object) array( 'type' => 'pkwyc_consent', 'isRequired' => true ),
+) );
+$relaxed = pkwyc_kill_switch_relax_gf_form( $gf_form );
+pkwyc_assert( 'switch: consent field no longer required', $relaxed['fields'][1]->isRequired, false );
+pkwyc_assert( 'switch: other required fields untouched', $relaxed['fields'][0]->isRequired, true );
+pkwyc_assert( 'switch: form without fields passes through', pkwyc_kill_switch_relax_gf_form( array( 'title' => 'x' ) ), array( 'title' => 'x' ) );
+pkwyc_assert( 'switch: non-array passes through', pkwyc_kill_switch_relax_gf_form( false ), false );
+
 pkwyc_results();

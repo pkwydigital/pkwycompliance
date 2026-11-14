@@ -75,6 +75,11 @@ function pkwyc_components() {
 function pkwyc_load_components() {
 
 	if ( pkwyc_is_disabled() ) {
+		// Gravity Forms would otherwise keep a stored Consent field required
+		// with no box to tick. See pkwyc_kill_switch_relax_gf_form().
+		foreach ( array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter', 'gform_admin_pre_render' ) as $hook ) {
+			add_filter( $hook, 'pkwyc_kill_switch_relax_gf_form' );
+		}
 		return;
 	}
 
