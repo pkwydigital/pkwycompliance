@@ -94,9 +94,12 @@ function pkwyc_consent_gf_register() {
 			$script  = 'window.fieldSettings = window.fieldSettings || {};';
 			$script .= 'window.fieldSettings["pkwyc_consent"] = ".conditional_logic_field_setting,.error_message_setting,.label_setting,.label_placement_setting,.description_setting,.pkwyc_wording_setting,.css_class_setting,.visibility_setting,.rules_setting";';
 
-			$script .= 'gform.addFilter("gform_editor_js_set_default_values", function(field){'
-				. 'if(field.type==="pkwyc_consent"){field.label="Consent";field.isRequired=true;field.labelPlacement="hidden_label";}'
-				. 'return field;});';
+			// Gravity Forms calls window["SetDefaultValues_" + type](field) after its
+			// own defaults. There is no JS filter for this; see test-gf-signatures.php.
+			$script .= 'window.SetDefaultValues_pkwyc_consent = function(field){'
+				. 'field.label=' . wp_json_encode( __( 'Consent', 'pkwycompliance' ) ) . ';'
+				. 'field.isRequired=true;field.labelPlacement="hidden_label";'
+				. 'return field;};';
 
 			$script .= 'jQuery(document).on("gform_load_field_settings", function(event, field){'
 				. 'jQuery("#pkwyc_wording").val(field.pkwycWording || "");});';

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Fix: on Gravity Forms 3.x a newly added PKWY Consent field was labelled "Untitled" and was not Required, because its defaults were set through a hook Gravity Forms does not have. A new field is now labelled "Consent", Required, with the label hidden, as intended. Fields already on forms are unchanged; check that each one has the Required setting you want.
+- Settings, Compliance and its Help tab link to an illustrated setup guide (PDF, attached to each release) and a short video.
+
 ## 1.3.1
 
 - WPForms entry screen: the consent wording box now has inner padding, so the text no longer sits against the box edge.

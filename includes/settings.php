@@ -52,6 +52,50 @@ function pkwyc_guide_url() {
 }
 
 /**
+ * The illustrated guide (PDF), attached to every GitHub release under this
+ * name, so the latest one is always at the same address.
+ */
+function pkwyc_guide_pdf_url() {
+	return 'https://github.com/pkwydigital/pkwycompliance/releases/latest/download/pkwycompliance-guide.pdf';
+}
+
+/**
+ * The narrated walkthrough on YouTube (unlisted). When this returns '' no
+ * video link is shown.
+ */
+function pkwyc_video_url() {
+	return 'https://www.youtube.com/watch?v=yFTJkiFRv90';
+}
+
+/**
+ * The help links, video first when there is one.
+ *
+ * @return array array( array( 'label', 'url' ) )
+ */
+function pkwyc_help_links() {
+
+	$links = array();
+	if ( pkwyc_video_url() !== '' ) {
+		$links[] = array( 'label' => __( 'Video walkthrough', 'pkwycompliance' ), 'url' => pkwyc_video_url() );
+	}
+	$links[] = array( 'label' => __( 'Illustrated guide (PDF)', 'pkwycompliance' ), 'url' => pkwyc_guide_pdf_url() );
+	$links[] = array( 'label' => __( 'Setup steps on GitHub', 'pkwycompliance' ), 'url' => pkwyc_guide_url() );
+	return $links;
+}
+
+/**
+ * The help links as a run of anchors separated by " | ", each opening in a new tab.
+ */
+function pkwyc_help_links_html() {
+
+	$out = array();
+	foreach ( pkwyc_help_links() as $link ) {
+		$out[] = '<a href="' . esc_url( $link['url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $link['label'] ) . '</a>';
+	}
+	return implode( ' | ', $out );
+}
+
+/**
  * The Help tabs on Settings, Compliance (the Help pull-down, top right).
  *
  * @return array array( array( 'id', 'title', 'content' ) )
@@ -118,7 +162,7 @@ function pkwyc_settings_help() {
 	}
 
 	$screen->set_help_sidebar(
-		'<p><strong>' . esc_html__( 'More', 'pkwycompliance' ) . '</strong></p><p><a href="' . esc_url( pkwyc_guide_url() ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Full setup guide', 'pkwycompliance' ) . '</a></p>'
+		'<p><strong>' . esc_html__( 'More', 'pkwycompliance' ) . '</strong></p><p>' . str_replace( ' | ', '</p><p>', pkwyc_help_links_html() ) . '</p>'
 	);
 }
 
@@ -153,11 +197,7 @@ function pkwyc_settings_page() {
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Compliance', 'pkwycompliance' ); ?></h1>
 		<p><?php
-		printf(
-			/* translators: %s: link to the setup guide */
-			esc_html__( 'New to this? Open Help at the top right, or read the %s.', 'pkwycompliance' ),
-			'<a href="' . esc_url( pkwyc_guide_url() ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'setup guide', 'pkwycompliance' ) . '</a>'
-		);
+		echo esc_html__( 'New to this? Open Help at the top right, or:', 'pkwycompliance' ) . ' ' . pkwyc_help_links_html(); // phpcs:ignore WordPress.Security.EscapeOutput -- built from esc_url and esc_html.
 		?></p>
 
 		<?php if ( $problem !== '' ) : ?>

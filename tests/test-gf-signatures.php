@@ -68,4 +68,27 @@ $pkwyc_button = GF_Fields::$registered[0]->get_form_editor_button();
 pkwyc_assert( 'editor button named apart from the built-in Consent field', $pkwyc_button['text'], 'PKWY Consent' );
 pkwyc_assert( 'editor field title named apart from the built-in Consent field', GF_Fields::$registered[0]->get_form_editor_field_title(), 'PKWY Consent' );
 
+// New-field defaults. Gravity Forms 3.x applies a custom field's defaults by
+// calling window["SetDefaultValues_" + type](field) after its own switch; there
+// is no JS filter named gform_editor_js_set_default_values (that name is a PHP
+// action inside the switch). Until 1.3.2 the adapter used the filter, so it
+// never ran: a new PKWY Consent field came out labelled "Untitled" and NOT
+// Required (found while recording the help video, 2026-11-14). Run the real
+// editor script in node, the way Gravity Forms would.
+$pkwyc_script = GF_Fields::$registered[0]->get_form_editor_inline_script_on_page_render();
+$pkwyc_js     = 'var window = globalThis; var document = {}; var gform = { addFilter: function(){} };'
+	. 'function jQuery(){ return { on: function(){} }; }'
+	. $pkwyc_script
+	. ';var f = typeof window.SetDefaultValues_pkwyc_consent === "function"'
+	. ' ? window.SetDefaultValues_pkwyc_consent({ type: "pkwyc_consent", label: "" }) : null;'
+	. 'process.stdout.write(JSON.stringify(f));';
+$pkwyc_tmp = tempnam( sys_get_temp_dir(), 'pkwyc' ) . '.js';
+file_put_contents( $pkwyc_tmp, $pkwyc_js );
+$pkwyc_out = json_decode( (string) shell_exec( 'node ' . escapeshellarg( $pkwyc_tmp ) . ' 2>&1' ), true );
+unlink( $pkwyc_tmp );
+pkwyc_assert( 'editor script defines SetDefaultValues_pkwyc_consent', is_array( $pkwyc_out ), true );
+pkwyc_assert( 'new field is labelled Consent', $pkwyc_out['label'] ?? null, 'Consent' );
+pkwyc_assert( 'new field is Required', $pkwyc_out['isRequired'] ?? null, true );
+pkwyc_assert( 'new field hides its label', $pkwyc_out['labelPlacement'] ?? null, 'hidden_label' );
+
 pkwyc_results();

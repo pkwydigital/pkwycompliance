@@ -25,4 +25,21 @@ pkwyc_assert( 'switches tab: disable line', strpos( $by['pkwyc-switches'], "defi
 pkwyc_assert( 'mailchimp tab warns against Add New Group', strpos( $by['pkwyc-mailchimp'], 'Add New Group' ) !== false, true );
 pkwyc_assert( 'guide url points at the README section', pkwyc_guide_url(), 'https://github.com/pkwydigital/pkwycompliance#setting-it-up' );
 
+// Links to the guide PDF and the video, shared by the Help sidebar and the line at the top of the settings screen.
+pkwyc_assert( 'guide pdf is the asset on the latest release', pkwyc_guide_pdf_url(), 'https://github.com/pkwydigital/pkwycompliance/releases/latest/download/pkwycompliance-guide.pdf' );
+$video = pkwyc_video_url();
+pkwyc_assert( 'video link is the published walkthrough', $video, 'https://www.youtube.com/watch?v=yFTJkiFRv90' );
+pkwyc_assert( 'video url is empty or a YouTube watch link', $video === '' || preg_match( '#^https://(www\.youtube\.com/watch\?v=|youtu\.be/)[A-Za-z0-9_-]{11}$#', $video ) === 1, true );
+$links = pkwyc_help_links();
+pkwyc_assert( 'every help link has a label and a url', count( array_filter( $links, function ( $l ) { return $l['label'] !== '' && strpos( $l['url'], 'https://' ) === 0; } ) ), count( $links ) );
+pkwyc_assert( 'help links include the pdf guide', in_array( pkwyc_guide_pdf_url(), array_column( $links, 'url' ), true ), true );
+pkwyc_assert( 'help links include the readme section', in_array( pkwyc_guide_url(), array_column( $links, 'url' ), true ), true );
+pkwyc_assert( 'help links include the video exactly when it is set', in_array( $video, array_column( $links, 'url' ), true ), $video !== '' );
+pkwyc_assert( 'video comes first when set', $video === '' || $links[0]['url'] === $video, true );
+$html = pkwyc_help_links_html();
+foreach ( $links as $l ) {
+	pkwyc_assert( "links html carries {$l['url']}", strpos( $html, 'href="' . esc_url( $l['url'] ) . '"' ) !== false, true );
+}
+pkwyc_assert( 'links open in a new tab safely', substr_count( $html, 'rel="noopener noreferrer"' ), count( $links ) );
+
 pkwyc_results();

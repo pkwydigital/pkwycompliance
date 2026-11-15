@@ -30,6 +30,7 @@ function esc_html( $text )     { return htmlspecialchars( (string) $text, ENT_QU
 function esc_attr( $text )     { return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' ); }
 function esc_html__( $t, $d = '' ) { return $t; }
 function __( $t, $d = '' )     { return $t; }
+if ( ! function_exists( 'wp_json_encode' ) ) { function wp_json_encode( $v ) { return json_encode( $v ); } }
 function wp_kses_post( $html ) { return $html; }
 function sanitize_text_field( $t ) { return trim( strip_tags( (string) $t ) ); }
 function wp_parse_args( $args, $defaults ) { return array_merge( $defaults, (array) $args ); }
