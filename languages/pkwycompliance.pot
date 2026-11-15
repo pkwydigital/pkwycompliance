@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T03:51:13+00:00\n"
+"POT-Creation-Date: 2026-11-15T03:58:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: pkwycompliance\n"
@@ -76,7 +76,7 @@ msgstr ""
 msgid "Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out."
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:440
+#: includes/components/consent/adapters/gravityforms.php:436
 #: includes/components/consent/adapters/wpforms.php:508
 #: includes/settings.php:245
 msgid "Consent wording"
@@ -429,6 +429,6 @@ msgstr ""
 msgid "Forms using the site wording will refuse to submit; forms with their own custom wording are not affected. Check it under %s."
 msgstr ""
 
-#: pkwycompliance.php:134
+#: pkwycompliance.php:136
 msgid "PKWYC_DISABLE is set in wp-config.php, so no consent field is being enforced on this site. Nobody is sent to Mailchimp through a connection that requires Consent. Do not deactivate or rename the plugin without first pausing those Mailchimp connections: with the plugin gone, WPForms ignores the Consent rule and subscribes everyone."
 msgstr ""
