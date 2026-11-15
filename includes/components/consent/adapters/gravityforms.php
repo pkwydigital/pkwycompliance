@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once dirname( __DIR__ ) . '/signature-guard.php';
+
 // Same timing trap as the WPForms adapter: gform_loaded may already have fired.
 if ( did_action( 'gform_loaded' ) ) {
 	pkwyc_consent_gf_register();
@@ -28,6 +30,14 @@ function pkwyc_consent_gf_register() {
 	}
 
 	if ( class_exists( 'PKWYC_GF_Consent_Field' ) ) {
+		return;
+	}
+
+	// Declaring the class against a parent it no longer fits is a fatal no
+	// try/catch can stop. Check first; see signature-guard.php.
+	$problems = pkwyc_signature_problems( 'GF_Field', pkwyc_consent_gf_spec() );
+	if ( $problems ) {
+		pkwyc_signature_guard_fail( 'Gravity Forms', $problems );
 		return;
 	}
 
@@ -447,4 +457,31 @@ add_filter( 'gform_entry_detail_meta_boxes', 'pkwyc_consent_gf_entry_box', 10, 3
 function pkwyc_consent_gf_entry_box_render( $args ) {
 	$json = gform_get_meta( absint( rgar( $args['entry'], 'id' ) ), 'pkwyc_consent_record' );
 	echo pkwyc_consent_record_html( is_string( $json ) ? $json : '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+}
+
+/**
+ * What PKWYC_GF_Consent_Field declares, for the signature guard: each method's parameter
+ * count and required count, and its own properties. Checked against the class
+ * itself by the tests; keep it in step when the class changes.
+ */
+function pkwyc_consent_gf_spec() {
+	return array(
+		'methods' => array(
+			'get_form_editor_field_title'                  => array( 0, 0 ),
+			'get_form_editor_button'                       => array( 0, 0 ),
+			'is_conditional_logic_supported'               => array( 0, 0 ),
+			'get_form_editor_field_icon'                   => array( 0, 0 ),
+			'get_form_editor_field_settings'               => array( 0, 0 ),
+			'get_form_editor_inline_script_on_page_render' => array( 0, 0 ),
+			'pkwyc_settings'                               => array( 0, 0 ),
+			'get_field_css_class'                          => array( 0, 0 ),
+			'get_field_input'                              => array( 3, 1 ),
+			'get_field_label'                              => array( 2, 0 ),
+			'get_value_submission'                         => array( 2, 1 ),
+			'validate'                                     => array( 2, 2 ),
+			'get_value_entry_detail'                       => array( 5, 1 ),
+			'get_value_export'                             => array( 4, 1 ),
+		),
+		'props'   => array( 'type', 'label', 'isRequired', 'labelPlacement', 'duplicatable' ),
+	);
 }

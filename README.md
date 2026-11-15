@@ -65,6 +65,8 @@ While `PKWYC_DISABLE` is on, a WPForms Mailchimp connection set to "process if C
 
 Updates come only from this repository's releases (the plugin header carries `Update URI`), only as the attached `pkwycompliance.zip`, and an unpacked update that is not this plugin at the offered version is refused before WordPress removes the old copy.
 
+If a WPForms or Gravity Forms update changes the code the Consent field is built on, the plugin turns the field off for that form plugin rather than let it crash the site, with the same safe Mailchimp behaviour as `PKWYC_DISABLE` and an error notice in the admin until a fitting release of this plugin is installed.
+
 ## Uninstalling
 
 Deleting the plugin from the Plugins screen (pause any Mailchimp connection that requires Consent first, as above) removes its settings (on every site of a multisite network) and its cached update check. Deactivating it removes nothing. Entries already collected by WPForms or Gravity Forms belong to those plugins and are left as they are.

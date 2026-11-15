@@ -67,6 +67,11 @@ if ( $mode === 'disabled' ) {
 
 } else {
 
+	// The signature guard must not mistake the real form plugins for broken
+	// ones: a false alarm turns the field off on every site.
+	$check( 'signature guard: WPForms fits', pkwyc_signature_problems( 'WPForms_Field', pkwyc_consent_wpforms_spec() ) === array() );
+	$check( 'signature guard: Gravity Forms fits', pkwyc_signature_problems( 'GF_Field', pkwyc_consent_gf_spec() ) === array() );
+	$check( 'signature guard: nothing turned off', empty( $GLOBALS['pkwyc_signature_failures'] ) );
 	$check( 'WPForms field class loaded', class_exists( 'PKWYC_WPForms_Consent_Field', false ) );
 	$check( 'Gravity Forms field class loaded', class_exists( 'PKWYC_GF_Consent_Field', false ) );
 	$check( 'Mailchimp rule: unticked is not subscribed', $subscribes( '' ) === false );

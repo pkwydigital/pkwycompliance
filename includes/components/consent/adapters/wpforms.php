@@ -10,6 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once dirname( __DIR__ ) . '/signature-guard.php';
+
 /*
  * Components load on plugins_loaded at priority 20, and WPForms fires
  * wpforms_loaded earlier in that same plugins_loaded run, so by the time this
@@ -28,6 +30,14 @@ function pkwyc_consent_wpforms_register() {
 	}
 
 	if ( class_exists( 'PKWYC_WPForms_Consent_Field' ) ) {
+		return;
+	}
+
+	// Declaring the class against a parent it no longer fits is a fatal no
+	// try/catch can stop. Check first; see signature-guard.php.
+	$problems = pkwyc_signature_problems( 'WPForms_Field', pkwyc_consent_wpforms_spec() );
+	if ( $problems ) {
+		pkwyc_signature_guard_fail( 'WPForms', $problems );
 		return;
 	}
 
@@ -510,3 +520,22 @@ function pkwyc_consent_wpforms_entry_box( $entry, $form_data ) {
 		. '</div></div>';
 }
 add_action( 'wpforms_entry_details_content', 'pkwyc_consent_wpforms_entry_box', 10, 2 );
+
+/**
+ * What PKWYC_WPForms_Consent_Field declares, for the signature guard: each method's parameter
+ * count and required count, and its own properties. Checked against the class
+ * itself by the tests; keep it in step when the class changes.
+ */
+function pkwyc_consent_wpforms_spec() {
+	return array(
+		'methods' => array(
+			'init'          => array( 0, 0 ),
+			'field_options' => array( 1, 1 ),
+			'field_preview' => array( 1, 1 ),
+			'field_display' => array( 3, 3 ),
+			'validate'      => array( 3, 3 ),
+			'format'        => array( 3, 3 ),
+		),
+		'props'   => array(),
+	);
+}

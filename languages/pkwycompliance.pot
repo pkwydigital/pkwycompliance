@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: PKWY Compliance 1.3.4\n"
+"Project-Id-Version: PKWY Compliance 1.3.5\n"
 "Report-Msgid-Bugs-To: https://github.com/pkwydigital/pkwycompliance/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T03:58:49+00:00\n"
+"POT-Creation-Date: 2026-11-15T05:15:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: pkwycompliance\n"
@@ -39,73 +39,73 @@ msgstr ""
 msgid "https://www.pkwydigital.com"
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:52
-#: includes/components/consent/adapters/gravityforms.php:58
+#: includes/components/consent/adapters/gravityforms.php:62
+#: includes/components/consent/adapters/gravityforms.php:68
 msgid "PKWY Consent"
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:99
-#: includes/components/consent/adapters/wpforms.php:41
-#: includes/components/consent/adapters/wpforms.php:46
-#: includes/components/consent/adapters/wpforms.php:234
+#: includes/components/consent/adapters/gravityforms.php:109
+#: includes/components/consent/adapters/wpforms.php:51
+#: includes/components/consent/adapters/wpforms.php:56
+#: includes/components/consent/adapters/wpforms.php:244
 msgid "Consent"
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:134
-#: includes/components/consent/adapters/wpforms.php:176
+#: includes/components/consent/adapters/gravityforms.php:144
+#: includes/components/consent/adapters/wpforms.php:186
 #: includes/components/consent/logic.php:231
 msgid "This form cannot be submitted at this time."
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:136
-#: includes/components/consent/adapters/wpforms.php:178
+#: includes/components/consent/adapters/gravityforms.php:146
+#: includes/components/consent/adapters/wpforms.php:188
 msgid "Admin:"
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:136
-#: includes/components/consent/adapters/wpforms.php:178
+#: includes/components/consent/adapters/gravityforms.php:146
+#: includes/components/consent/adapters/wpforms.php:188
 msgid "See Settings, Compliance."
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:204
-#: includes/components/consent/adapters/wpforms.php:119
+#: includes/components/consent/adapters/gravityforms.php:214
+#: includes/components/consent/adapters/wpforms.php:129
 msgid "Custom wording"
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:206
+#: includes/components/consent/adapters/gravityforms.php:216
 msgid "Leave blank to use the site wording from Settings, Compliance. {company}, {privacy} and {terms} work here too, and the links are added if left out."
 msgstr ""
 
-#: includes/components/consent/adapters/gravityforms.php:436
-#: includes/components/consent/adapters/wpforms.php:508
+#: includes/components/consent/adapters/gravityforms.php:446
+#: includes/components/consent/adapters/wpforms.php:518
 #: includes/settings.php:245
 msgid "Consent wording"
 msgstr ""
 
 #. translators: %s: link to the settings screen.
-#: includes/components/consent/adapters/wpforms.php:77
+#: includes/components/consent/adapters/wpforms.php:87
 #, php-format
 msgid "The links, and the wording unless set below, come from %s."
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:78
+#: includes/components/consent/adapters/wpforms.php:88
 #: includes/settings.php:440
 msgid "Settings, Compliance"
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:101
+#: includes/components/consent/adapters/wpforms.php:111
 msgid "Optional"
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:110
+#: includes/components/consent/adapters/wpforms.php:120
 msgid "Off: the form cannot be submitted unless the box is ticked. On: visitors may leave it unticked, and the entry records an empty value."
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:120
+#: includes/components/consent/adapters/wpforms.php:130
 msgid "Leave blank to use the site wording. {company}, {privacy} and {terms} work here too, and the links are added if left out."
 msgstr ""
 
-#: includes/components/consent/adapters/wpforms.php:158
+#: includes/components/consent/adapters/wpforms.php:168
 msgid "Not configured. Set the Privacy Policy URL and the wording under Settings, Compliance (and a Terms URL if the wording uses {terms}). Until then this form cannot be submitted."
 msgstr ""
 
@@ -181,6 +181,16 @@ msgstr ""
 #: includes/components/consent/logic.php:405
 #, php-format
 msgid "Recorded %1$s by PKWY Compliance %2$s."
+msgstr ""
+
+#: includes/components/consent/signature-guard.php:190
+msgid "PKWY Compliance has turned off its Consent field."
+msgstr ""
+
+#. translators: %s: WPForms or Gravity Forms.
+#: includes/components/consent/signature-guard.php:194
+#, php-format
+msgid "An update to %s changed code the field is built on, and loading the field would have crashed the site. Forms still submit, without the consent box, and no Mailchimp connection that requires Consent subscribes anyone. Update PKWY Compliance; if no newer version is offered yet, Parkway Digital needs to release one."
 msgstr ""
 
 #: includes/settings.php:33

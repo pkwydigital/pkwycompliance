@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.5
+
+- A WPForms or Gravity Forms update that changes the code the Consent field is built on no longer takes the site down. Before loading the field, the plugin checks that the form plugin still fits it. If it does not, the field is turned off for that form plugin instead of causing a fatal error on every page: forms still submit, without the box; no Mailchimp connection that requires Consent subscribes anyone; Gravity Forms stops requiring the box; administrators see an error notice naming the form plugin and the reason, and the reason is written to the PHP error log. Updating PKWY Compliance to a release that fits brings the field back.
+
 ## 1.3.4
 
 - Fix: with PKWYC_DISABLE set, a WPForms Mailchimp connection set to "process if Consent is not empty" subscribed everyone, because WPForms skips a rule on a field type it does not know. The switch now records the Consent field as blank and has WPForms compare it as text, so connections set to "Consent is not empty" or "Consent is agreed" subscribe nobody while it is on. Deactivating, deleting or renaming the plugin still lets WPForms skip the rule: the disabled notice, the Help tab and the README now say to pause those Mailchimp connections first.

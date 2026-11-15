@@ -134,4 +134,33 @@ pkwyc_assert( 'stored administrative consent field shown', $out['fields'][0]->vi
 pkwyc_assert( 'other fields untouched', $out['fields'][1]->visibility, 'hidden' );
 pkwyc_assert( 'non-form passes through', pkwyc_consent_gf_force_visible( false ), false );
 
+// The adapter's hand-kept spec must describe the class it declares, or the
+// guard checks the wrong thing (signature guard, 2026-11-15).
+pkwyc_assert( 'GF spec matches the declared class', pkwyc_signature_spec_of( 'PKWYC_GF_Consent_Field' ), pkwyc_consent_gf_spec() );
+pkwyc_assert( 'GF spec fits the parent stub', pkwyc_signature_problems( 'GF_Field', pkwyc_consent_gf_spec() ), array() );
+
+// A form-plugin update that breaks the parent must not take the site down:
+// the class is not declared, the failure is recorded, and the fail-closed hooks go on.
+$pkwyc_broken = "<?php\n"
+	. "define( 'ABSPATH', __DIR__ );\n"
+	. "class GF_Field { public function get_field_input( \$form, \$value = '', \$entry = null ): string { return ''; } }\nclass GF_Fields { public static function register( \$f ) {} }\n"
+	. "function did_action( \$h ) { return 1; }\n"
+	. "\$GLOBALS['pkwyc_hooks'] = array();\n"
+	. "function add_filter( \$h, \$c, \$p = 10, \$a = 1 ) { \$GLOBALS['pkwyc_hooks'][] = \$h; return true; }\n"
+	. "function add_action( \$h, \$c, \$p = 10, \$a = 1 ) { \$GLOBALS['pkwyc_hooks'][] = \$h; return true; }\n"
+	. "function has_action( \$h, \$c = false ) { return in_array( \$h, \$GLOBALS['pkwyc_hooks'], true ); }\n"
+	. "require " . var_export( realpath( __DIR__ . '/../includes/components/consent/logic.php' ), true ) . ";\n"
+	. "require " . var_export( realpath( __DIR__ . '/../includes/components/consent/adapters/gravityforms.php' ), true ) . ";\n"
+	. "echo json_encode( array( 'declared' => class_exists( 'PKWYC_GF_Consent_Field', false ), 'failed' => isset( \$GLOBALS['pkwyc_signature_failures']['Gravity Forms'] ), 'hooks' => \$GLOBALS['pkwyc_hooks'] ) );\n";
+$pkwyc_bf = sys_get_temp_dir() . '/pkwyc-broken-' . getmypid() . '.php';
+file_put_contents( $pkwyc_bf, $pkwyc_broken );
+$pkwyc_raw = (string) shell_exec( escapeshellarg( PHP_BINARY ) . ' -d error_log=/dev/null ' . escapeshellarg( $pkwyc_bf ) . ' 2>&1' );
+unlink( $pkwyc_bf );
+$pkwyc_res = json_decode( substr( $pkwyc_raw, (int) strpos( $pkwyc_raw, '{' ) ), true );
+pkwyc_assert( 'GF broken parent: site did not fatal', is_array( $pkwyc_res ), true );
+pkwyc_assert( 'GF broken parent: class not declared', $pkwyc_res['declared'] ?? null, false );
+pkwyc_assert( 'GF broken parent: failure recorded', $pkwyc_res['failed'] ?? null, true );
+pkwyc_assert( 'GF broken parent: fail-closed hooks on', count( array_intersect( array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' ), $pkwyc_res['hooks'] ?? array() ) ), 3 );
+pkwyc_assert( 'GF broken parent: admin notice on', in_array( 'admin_notices', $pkwyc_res['hooks'] ?? array(), true ), true );
+
 pkwyc_results();

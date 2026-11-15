@@ -90,4 +90,33 @@ pkwyc_assert( 'no duplicate button on a new consent field', pkwyc_consent_wpform
 pkwyc_assert( 'no duplicate button on an existing consent field', pkwyc_consent_wpforms_no_duplicate( true, array( 'type' => 'pkwyc_consent' ), array() ), false );
 pkwyc_assert( 'other fields keep theirs', pkwyc_consent_wpforms_no_duplicate( true, array( 'type' => 'text' ) ), true );
 
+// The adapter's hand-kept spec must describe the class it declares, or the
+// guard checks the wrong thing (signature guard, 2026-11-15).
+pkwyc_assert( 'WPForms spec matches the declared class', pkwyc_signature_spec_of( 'PKWYC_WPForms_Consent_Field' ), pkwyc_consent_wpforms_spec() );
+pkwyc_assert( 'WPForms spec fits the parent stub', pkwyc_signature_problems( 'WPForms_Field', pkwyc_consent_wpforms_spec() ), array() );
+
+// A form-plugin update that breaks the parent must not take the site down:
+// the class is not declared, the failure is recorded, and the fail-closed hooks go on.
+$pkwyc_broken = "<?php\n"
+	. "define( 'ABSPATH', __DIR__ );\n"
+	. "abstract class WPForms_Field { abstract public function init(); public function field_display( \$field, \$field_atts, \$form_data, \$extra ) {} }\n"
+	. "function did_action( \$h ) { return 1; }\n"
+	. "\$GLOBALS['pkwyc_hooks'] = array();\n"
+	. "function add_filter( \$h, \$c, \$p = 10, \$a = 1 ) { \$GLOBALS['pkwyc_hooks'][] = \$h; return true; }\n"
+	. "function add_action( \$h, \$c, \$p = 10, \$a = 1 ) { \$GLOBALS['pkwyc_hooks'][] = \$h; return true; }\n"
+	. "function has_action( \$h, \$c = false ) { return in_array( \$h, \$GLOBALS['pkwyc_hooks'], true ); }\n"
+	. "require " . var_export( realpath( __DIR__ . '/../includes/components/consent/logic.php' ), true ) . ";\n"
+	. "require " . var_export( realpath( __DIR__ . '/../includes/components/consent/adapters/wpforms.php' ), true ) . ";\n"
+	. "echo json_encode( array( 'declared' => class_exists( 'PKWYC_WPForms_Consent_Field', false ), 'failed' => isset( \$GLOBALS['pkwyc_signature_failures']['WPForms'] ), 'hooks' => \$GLOBALS['pkwyc_hooks'] ) );\n";
+$pkwyc_bf = sys_get_temp_dir() . '/pkwyc-broken-' . getmypid() . '.php';
+file_put_contents( $pkwyc_bf, $pkwyc_broken );
+$pkwyc_raw = (string) shell_exec( escapeshellarg( PHP_BINARY ) . ' -d error_log=/dev/null ' . escapeshellarg( $pkwyc_bf ) . ' 2>&1' );
+unlink( $pkwyc_bf );
+$pkwyc_res = json_decode( substr( $pkwyc_raw, (int) strpos( $pkwyc_raw, '{' ) ), true );
+pkwyc_assert( 'WPForms broken parent: site did not fatal', is_array( $pkwyc_res ), true );
+pkwyc_assert( 'WPForms broken parent: class not declared', $pkwyc_res['declared'] ?? null, false );
+pkwyc_assert( 'WPForms broken parent: failure recorded', $pkwyc_res['failed'] ?? null, true );
+pkwyc_assert( 'WPForms broken parent: fail-closed hooks on', count( array_intersect( array( 'wpforms_process_format_pkwyc_consent', 'wpforms_conditional_logic_core_get_text_based_fields' ), $pkwyc_res['hooks'] ?? array() ) ), 2 );
+pkwyc_assert( 'WPForms broken parent: admin notice on', in_array( 'admin_notices', $pkwyc_res['hooks'] ?? array(), true ), true );
+
 pkwyc_results();
