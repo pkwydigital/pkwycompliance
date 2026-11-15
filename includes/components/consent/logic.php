@@ -451,3 +451,43 @@ function pkwyc_kill_switch_relax_gf_form( $form ) {
 function pkwyc_kill_switch_gf_hooks() {
 	return array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' );
 }
+
+/**
+ * With the emergency switch on, the processed WPForms field for a stored
+ * Consent field: always blank, because no visitor was shown the box.
+ *
+ * Without it, WPForms leaves an unregistered field type out of the processed
+ * fields, and its conditional logic skips any rule on a missing field while
+ * the rest of the group passes. A Mailchimp connection set to "process if
+ * Consent is not empty" then subscribed everyone. Recording the field as blank
+ * makes that rule fail, so nobody is subscribed through it while the switch is
+ * on. Deactivating or renaming the plugin cannot be covered this way: pause
+ * those connections first.
+ *
+ * @param int|string $field_id  WPForms field id.
+ * @param array      $form_data Decoded form data.
+ * @return array The entry for WPForms' processed fields.
+ */
+function pkwyc_kill_switch_wpforms_field( $field_id, $form_data ) {
+	$id    = (int) $field_id;
+	$label = isset( $form_data['fields'][ $id ]['label'] ) ? trim( (string) $form_data['fields'][ $id ]['label'] ) : '';
+	return array(
+		'name'  => $label !== '' ? sanitize_text_field( $label ) : 'Consent',
+		'value' => '',
+		'id'    => $id,
+		'type'  => 'pkwyc_consent',
+	);
+}
+
+/**
+ * WPForms' format step for a Consent field while the emergency switch is on.
+ */
+function pkwyc_kill_switch_wpforms_format( $field_id, $field_submit, $form_data ) {
+	if ( ! function_exists( 'wpforms' ) ) {
+		return;
+	}
+	$process = wpforms()->obj( 'process' );
+	if ( $process ) {
+		$process->fields[ $field_id ] = pkwyc_kill_switch_wpforms_field( $field_id, $form_data );
+	}
+}

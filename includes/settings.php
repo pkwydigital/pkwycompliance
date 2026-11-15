@@ -142,7 +142,8 @@ function pkwyc_help_tabs() {
 			'title'   => __( 'Emergency switches', 'pkwycompliance' ),
 			'content' => $p( esc_html__( 'The plugin updates itself. Two lines in wp-config.php change that, for when something goes wrong:', 'pkwycompliance' ) )
 				. "<pre>define( 'PKWYC_NO_AUTO_UPDATE', true );\ndefine( 'PKWYC_DISABLE', true );</pre>"
-				. $p( esc_html__( 'The first keeps the plugin as it is and stops automatic updates; updates still show on the Plugins screen to apply by hand. The second stops the plugin enforcing anything, so forms submit with or without the box, and shows a warning across wp-admin so the site does not look like it is working normally.', 'pkwycompliance' ) ),
+				. $p( esc_html__( 'The first keeps the plugin as it is and stops automatic updates; updates still show on the Plugins screen to apply by hand. The second stops the plugin enforcing anything, so forms submit with or without the box, and shows a warning across wp-admin so the site does not look like it is working normally.', 'pkwycompliance' ) )
+				. $p( esc_html__( 'While PKWYC_DISABLE is on, Mailchimp connections that require Consent subscribe nobody. Deactivating, deleting or renaming the plugin is different: WPForms then ignores the Consent rule and subscribes everyone, so pause those Mailchimp connections first.', 'pkwycompliance' ) ),
 		),
 	);
 }
@@ -297,7 +298,20 @@ function pkwyc_settings_page() {
  */
 function pkwyc_settings_forms_report() {
 
-	$rows = apply_filters( 'pkwyc_consent_forms_report', array() );
+	$rows    = apply_filters( 'pkwyc_consent_forms_report', array() );
+	$missing = apply_filters( 'pkwyc_consent_forms_missing', array() );
+
+	if ( ! empty( $missing ) ) {
+		$links = array();
+		foreach ( $missing as $m ) {
+			$links[] = sprintf( '<a href="%s">%s</a>', esc_url( $m['edit_url'] ), esc_html( $m['title'] ) );
+		}
+		printf(
+			'<p class="pkwyc-missing" style="color:#b32d2e">%s %s</p>',
+			esc_html__( 'These forms send people to Mailchimp but have no Consent field, so their Mailchimp connections cannot check for consent:', 'pkwycompliance' ),
+			implode( ', ', $links ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+		);
+	}
 
 	if ( empty( $rows ) ) {
 		echo '<p>' . esc_html__( 'No form uses the Consent field yet.', 'pkwycompliance' ) . '</p>';
@@ -321,6 +335,9 @@ function pkwyc_settings_forms_report() {
 				esc_html( $c['name'] ),
 				esc_html( pkwyc_audit_status_label( $c['status'] ) )
 			);
+		}
+		if ( ! empty( $row['duplicates'] ) ) {
+			$cell .= '<p class="pkwyc-duplicate" style="margin:0 0 6px;color:#b32d2e">' . esc_html__( 'This form has more than one Consent field. Only the first is shown and checked; delete the others.', 'pkwycompliance' ) . '</p>';
 		}
 		printf(
 			'<tr><td><a href="%s">%s</a><br><span class="description">%s</span></td><td>%s</td></tr>',

@@ -23,9 +23,19 @@ class WPForms_Field {
 function did_action( $hook ) { return 1; }
 function current_user_can( $cap ) { return false; }
 function esc_js( $t ) { return addslashes( (string) $t ); }
+// Renders attributes the way WPForms does: id, class, then every attr in order.
 function wpforms_html_attributes( $id = '', $class = array(), $datas = array(), $atts = array() ) {
-	return 'id="' . esc_attr( $id ) . '" class="' . esc_attr( implode( ' ', (array) $class ) ) . '"';
+	$out = 'id="' . esc_attr( $id ) . '" class="' . esc_attr( implode( ' ', (array) $class ) ) . '"';
+	foreach ( (array) $atts as $k => $v ) {
+		$out .= ' ' . $k . '="' . esc_attr( $v ) . '"';
+	}
+	return $out;
 }
+class PKWYC_Test_Process { public $errors = array(); public $fields = array(); }
+$GLOBALS['pkwyc_process'] = new PKWYC_Test_Process();
+class PKWYC_Test_WPForms { public function obj( $n ) { return $n === 'process' ? $GLOBALS['pkwyc_process'] : null; } }
+function wpforms() { return new PKWYC_Test_WPForms(); }
+function absint( $n ) { return abs( (int) $n ); }
 function pkwyc_settings() {
 	return array( 'company' => 'Example Law Firm', 'privacy_url' => 'https://example.org/privacy/', 'terms_url' => '', 'wording' => 'Yes, {company} can email me. {privacy}' );
 }
@@ -48,5 +58,36 @@ $pkwyc_html = ob_get_clean();
 pkwyc_assert( 'front end renders the checkbox', strpos( $pkwyc_html, 'type="checkbox"' ) !== false, true );
 pkwyc_assert( 'wording label uses the WPForms inline label class', strpos( $pkwyc_html, '<label class="wpforms-field-label-inline">' ) !== false, true );
 pkwyc_assert( 'wording is inside the label', strpos( $pkwyc_html, 'Yes, Example Law Firm can email me.' ) !== false, true );
+
+// A value WPForms puts in attr (dynamic population, a stored default) would be
+// printed before value="agreed", and the browser keeps the first one, so a
+// ticked box could submit something other than "agreed" (audit 2026-11-14).
+$pkwyc_input['properties']['inputs']['primary']['attr']['value'] = 'prefilled';
+ob_start();
+$pkwyc_field->field_display( $pkwyc_input, null, array() );
+$pkwyc_html2 = ob_get_clean();
+pkwyc_assert( 'no populated value attribute reaches the box', strpos( $pkwyc_html2, 'prefilled' ), false );
+pkwyc_assert( 'the box submits agreed', substr_count( $pkwyc_html2, 'value="agreed"' ), 1 );
+pkwyc_assert( 'the field name is kept', strpos( $pkwyc_html2, 'name="wpforms[fields][4]"' ) !== false, true );
+
+// Two Consent fields (the builder's Duplicate button, an import). The second is
+// dropped at render, so it must not be validated either: a required, unseen
+// duplicate refused every submission (audit 2026-11-14, high).
+$two = array( 'id' => 9, 'fields' => array(
+	3 => array( 'id' => 3, 'type' => 'pkwyc_consent' ),
+	4 => array( 'id' => 4, 'type' => 'pkwyc_consent' ),
+) );
+$GLOBALS['pkwyc_process']->errors = array();
+$pkwyc_field->validate( 4, '', $two );
+pkwyc_assert( 'second consent field is not validated', $GLOBALS['pkwyc_process']->errors, array() );
+$pkwyc_field->validate( 3, '', $two );
+pkwyc_assert( 'first consent field is still enforced', isset( $GLOBALS['pkwyc_process']->errors[9][3] ), true );
+pkwyc_assert( 'first consent instance helper', pkwyc_consent_wpforms_first_id( $two ), '3' );
+pkwyc_assert( 'no consent field gives empty id', pkwyc_consent_wpforms_first_id( array( 'fields' => array() ) ), '' );
+
+// The builder offers no Duplicate button on the Consent field.
+pkwyc_assert( 'no duplicate button on a new consent field', pkwyc_consent_wpforms_no_duplicate( true, array( 'type' => 'pkwyc_consent' ) ), false );
+pkwyc_assert( 'no duplicate button on an existing consent field', pkwyc_consent_wpforms_no_duplicate( true, array( 'type' => 'pkwyc_consent' ), array() ), false );
+pkwyc_assert( 'other fields keep theirs', pkwyc_consent_wpforms_no_duplicate( true, array( 'type' => 'text' ) ), true );
 
 pkwyc_results();

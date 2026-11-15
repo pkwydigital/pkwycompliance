@@ -201,6 +201,18 @@ pkwyc_assert( 'switch: non-array passes through', pkwyc_kill_switch_relax_gf_for
 // form while it is on would store the Consent field as optional for good.
 pkwyc_assert( 'switch hooks: front end and validation only', pkwyc_kill_switch_gf_hooks(), array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' ) );
 
+// Kill switch on WPForms (audit 2026-11-14, high). With the field type
+// unregistered, WPForms leaves the Consent field out of the processed fields
+// and its conditional logic SKIPS any rule on it, so "process this Mailchimp
+// connection if Consent is not empty" passed for everyone. Under the switch the
+// field is still recorded, always blank: nobody was shown the box.
+$ks = pkwyc_kill_switch_wpforms_field( '5', array( 'fields' => array( 5 => array( 'id' => 5, 'type' => 'pkwyc_consent', 'label' => 'Marketing' ) ) ) );
+pkwyc_assert( 'switch wpforms: field recorded with its type', $ks['type'], 'pkwyc_consent' );
+pkwyc_assert( 'switch wpforms: value always blank', $ks['value'], '' );
+pkwyc_assert( 'switch wpforms: id and name kept', array( $ks['id'], $ks['name'] ), array( 5, 'Marketing' ) );
+$ks2 = pkwyc_kill_switch_wpforms_field( 7, array() );
+pkwyc_assert( 'switch wpforms: missing label falls back to Consent', $ks2['name'], 'Consent' );
+
 // The builder note does not depend on whether the form has a Mailchimp
 // connection: that state changes in the builder without a reload, and a note
 // that read it went stale. One sentence per platform, true either way.

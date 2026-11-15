@@ -142,15 +142,18 @@ function pkwyc_audit_gf_feed( $feed_meta, $consent_field_id ) {
  * One WPForms form: its Consent field and the status of each Mailchimp connection.
  *
  * @param array $form_data Decoded form post_content.
- * @return array|null array( 'consent_field_id' => string, 'connections' => array( array( 'id', 'name', 'status' ) ) ), or null when the form has no Consent field.
+ * @return array|null array( 'consent_field_id' => string (the first), 'consent_fields' => int, 'connections' => array( array( 'id', 'name', 'status' ) ) ), or null when the form has no Consent field.
  */
 function pkwyc_audit_wpforms_form( $form_data ) {
 
 	$consent_id = '';
+	$count      = 0;
 	foreach ( ( isset( $form_data['fields'] ) && is_array( $form_data['fields'] ) ? $form_data['fields'] : array() ) as $field ) {
 		if ( isset( $field['type'], $field['id'] ) && $field['type'] === 'pkwyc_consent' ) {
-			$consent_id = (string) $field['id'];
-			break;
+			if ( $consent_id === '' ) {
+				$consent_id = (string) $field['id'];
+			}
+			$count++;
 		}
 	}
 	if ( $consent_id === '' ) {
@@ -171,7 +174,7 @@ function pkwyc_audit_wpforms_form( $form_data ) {
 		);
 	}
 
-	return array( 'consent_field_id' => $consent_id, 'connections' => $rows );
+	return array( 'consent_field_id' => $consent_id, 'consent_fields' => $count, 'connections' => $rows );
 }
 
 /**
@@ -234,4 +237,21 @@ function pkwyc_audit_group_feeds_by_form( $feeds ) {
 		$grouped[ (int) $feed['form_id'] ][] = $feed;
 	}
 	return $grouped;
+}
+
+/**
+ * Does this WPForms form send people to Mailchimp with no Consent field at all?
+ *
+ * The forms table lists forms carrying the field; a connected form nobody added
+ * the field to is the likeliest real leak, so it is counted separately.
+ *
+ * @param array $form_data Decoded form post_content.
+ * @return bool
+ */
+function pkwyc_audit_wpforms_mailchimp_without_consent( $form_data ) {
+	$connections = isset( $form_data['providers']['mailchimpv3'] ) && is_array( $form_data['providers']['mailchimpv3'] ) ? $form_data['providers']['mailchimpv3'] : array();
+	if ( empty( $connections ) ) {
+		return false;
+	}
+	return pkwyc_audit_wpforms_form( $form_data ) === null;
 }

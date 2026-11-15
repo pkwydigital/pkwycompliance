@@ -61,9 +61,13 @@ define( 'PKWYC_DISABLE', true );         // stop it enforcing anything at all
 
 The second is the one to reach for if a release ever breaks form submission on a live site. It leaves the plugin installed and shows a warning in the admin so a disabled site does not look like a working one.
 
+While `PKWYC_DISABLE` is on, a WPForms Mailchimp connection set to "process if Consent is not empty" subscribes nobody. Deactivating, deleting or renaming the plugin folder is different: WPForms then skips any rule on a field type it does not know, and that connection subscribes everyone. Pause those Mailchimp connections before taking the plugin away by any route other than `PKWYC_DISABLE`.
+
+Updates come only from this repository's releases (the plugin header carries `Update URI`), only as the attached `pkwycompliance.zip`, and an unpacked update that is not this plugin at the offered version is refused before WordPress removes the old copy.
+
 ## Uninstalling
 
-Deleting the plugin from the Plugins screen removes its settings (on every site of a multisite network) and its cached update check. Deactivating it removes nothing. Entries already collected by WPForms or Gravity Forms belong to those plugins and are left as they are.
+Deleting the plugin from the Plugins screen (pause any Mailchimp connection that requires Consent first, as above) removes its settings (on every site of a multisite network) and its cached update check. Deactivating it removes nothing. Entries already collected by WPForms or Gravity Forms belong to those plugins and are left as they are.
 
 ## Development
 

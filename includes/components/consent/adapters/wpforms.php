@@ -182,6 +182,12 @@ function pkwyc_consent_wpforms_register() {
 
 			$primary   = $field['properties']['inputs']['primary'];
 			$mirror_id = $primary['id'];
+
+			// The box's value is fixed. A value WPForms put in attr (dynamic
+			// population, a stored default) would be printed first and win.
+			if ( isset( $primary['attr'] ) && is_array( $primary['attr'] ) ) {
+				unset( $primary['attr']['value'] );
+			}
 			$box_id    = $mirror_id . '-box';
 
 			/*
@@ -204,6 +210,13 @@ function pkwyc_consent_wpforms_register() {
 		}
 
 		public function validate( $field_id, $field_submit, $form_data ) {
+
+			// Only the first Consent field is shown (pkwyc_consent_wpforms_single),
+			// so only the first is enforced. A second one, unseen and required,
+			// would otherwise refuse every submission.
+			if ( (string) $field_id !== pkwyc_consent_wpforms_first_id( $form_data ) ) {
+				return;
+			}
 
 			$field    = isset( $form_data['fields'][ $field_id ] ) ? $form_data['fields'][ $field_id ] : array();
 			$required = pkwyc_consent_is_required( isset( $field['pkwyc_optional'] ) ? $field['pkwyc_optional'] : null );
@@ -329,12 +342,35 @@ function pkwyc_consent_wpforms_report( $rows ) {
 			'title'       => $form->post_title,
 			'edit_url'    => admin_url( 'admin.php?page=wpforms-builder&view=fields&form_id=' . absint( $form->ID ) ),
 			'connections' => $report['connections'],
+			'duplicates'  => max( 0, (int) $report['consent_fields'] - 1 ),
 		);
 	}
 
 	return $rows;
 }
 add_filter( 'pkwyc_consent_forms_report', 'pkwyc_consent_wpforms_report' );
+
+/**
+ * WPForms forms that send people to Mailchimp but have no Consent field.
+ */
+function pkwyc_consent_wpforms_missing( $rows ) {
+
+	if ( ! function_exists( 'wpforms' ) || ! function_exists( 'wpforms_decode' ) ) {
+		return $rows;
+	}
+
+	foreach ( pkwyc_consent_wpforms_all_forms() as $form ) {
+		if ( pkwyc_audit_wpforms_mailchimp_without_consent( $form->pkwyc_data ) ) {
+			$rows[] = array(
+				'title'    => $form->post_title,
+				'edit_url' => admin_url( 'admin.php?page=wpforms-builder&view=fields&form_id=' . absint( $form->ID ) ),
+			);
+		}
+	}
+
+	return $rows;
+}
+add_filter( 'pkwyc_consent_forms_missing', 'pkwyc_consent_wpforms_missing' );
 
 /**
  * Let the consent field drive conditional logic: Mailchimp connections,
@@ -350,8 +386,10 @@ add_filter( 'wpforms_conditional_logic_core_get_text_based_fields', 'pkwyc_conse
  * Keep one instance per form.
  *
  * Two consent fields on one form means asking the same question twice and
- * storing two answers. The second is dropped at render rather than refused, so
- * an editor who adds one by accident sees the form behave normally.
+ * storing two answers. The second is dropped at render and skipped by
+ * validate(); it is still stored blank, so a Mailchimp rule pointing at it
+ * subscribes nobody. Settings, Compliance lists the form so it can be removed,
+ * and the builder offers no Duplicate button on the field.
  */
 function pkwyc_consent_wpforms_single( $form_data ) {
 
@@ -375,6 +413,31 @@ function pkwyc_consent_wpforms_single( $form_data ) {
 	return $form_data;
 }
 add_filter( 'wpforms_frontend_form_data', 'pkwyc_consent_wpforms_single' );
+
+/**
+ * The id of the first Consent field on a form, or '' when it has none.
+ */
+function pkwyc_consent_wpforms_first_id( $form_data ) {
+	foreach ( ( isset( $form_data['fields'] ) && is_array( $form_data['fields'] ) ? $form_data['fields'] : array() ) as $id => $field ) {
+		if ( isset( $field['type'] ) && $field['type'] === 'pkwyc_consent' ) {
+			return (string) ( isset( $field['id'] ) ? $field['id'] : $id );
+		}
+	}
+	return '';
+}
+
+/**
+ * No Duplicate button on the Consent field in the builder, for a field just
+ * added or one already on the form.
+ */
+function pkwyc_consent_wpforms_no_duplicate( $display, $field, $form_data = null ) {
+	if ( is_array( $field ) && isset( $field['type'] ) && $field['type'] === 'pkwyc_consent' ) {
+		return false;
+	}
+	return $display;
+}
+add_filter( 'wpforms_field_new_display_duplicate_button', 'pkwyc_consent_wpforms_no_duplicate', 10, 2 );
+add_filter( 'wpforms_field_preview_display_duplicate_button', 'pkwyc_consent_wpforms_no_duplicate', 10, 3 );
 
 /**
  * Keep the exact wording shown with every entry from a form carrying the field,

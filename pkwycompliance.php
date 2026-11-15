@@ -3,7 +3,8 @@
  * Plugin Name: PKWY Compliance
  * Plugin URI:  https://github.com/pkwydigital/pkwycompliance
  * Description: Compliance building blocks for Parkway Digital client sites. The first component adds a marketing consent field to WPForms and Gravity Forms, with the legal wording held in one place rather than retyped per form.
- * Version:     1.3.3
+ * Version:     1.3.4
+ * Update URI:  https://github.com/pkwydigital/pkwycompliance
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Text Domain: pkwycompliance
@@ -24,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'PKWYC_VERSION', '1.3.3' );
+define( 'PKWYC_VERSION', '1.3.4' );
 define( 'PKWYC_SLUG', 'pkwycompliance' );
 define( 'PKWYC_FILE', __FILE__ );
 define( 'PKWYC_BASENAME', plugin_basename( __FILE__ ) );
@@ -68,9 +69,13 @@ function pkwyc_components() {
  * Load the components.
  *
  * Wrapped because this plugin auto-updates across every site it is installed
- * on and can block form submission by design. A fatal in a component must not
- * take a client's forms down with it, so a component that throws is skipped
- * and logged rather than allowed to bring down the request.
+ * on and can block form submission by design. A component that throws while
+ * loading is skipped and logged rather than allowed to bring down the request.
+ *
+ * The catch has limits: a class declared incompatibly with its parent (a form
+ * plugin changing a method signature) is a compile-time fatal that no try can
+ * catch. tests/test-gf-signatures.php and the release smoke test against the
+ * real form plugins exist for that case.
  */
 function pkwyc_load_components() {
 
@@ -80,6 +85,9 @@ function pkwyc_load_components() {
 		foreach ( pkwyc_kill_switch_gf_hooks() as $hook ) {
 			add_filter( $hook, 'pkwyc_kill_switch_relax_gf_form' );
 		}
+		// WPForms would otherwise skip every Mailchimp rule on Consent and
+		// subscribe everyone. See pkwyc_kill_switch_wpforms_field().
+		add_action( 'wpforms_process_format_pkwyc_consent', 'pkwyc_kill_switch_wpforms_format', 10, 3 );
 		return;
 	}
 
@@ -123,7 +131,7 @@ function pkwyc_disabled_notice() {
 	}
 
 	echo '<div class="notice notice-warning"><p><strong>PKWY Compliance is disabled.</strong> '
-		. esc_html__( 'PKWYC_DISABLE is set in wp-config.php, so no consent field is being enforced on this site.', 'pkwycompliance' )
+		. esc_html__( 'PKWYC_DISABLE is set in wp-config.php, so no consent field is being enforced on this site. Nobody is sent to Mailchimp through a connection that requires Consent. Do not deactivate or rename the plugin without first pausing those Mailchimp connections: with the plugin gone, WPForms ignores the Consent rule and subscribes everyone.', 'pkwycompliance' )
 		. '</p></div>';
 }
 add_action( 'admin_notices', 'pkwyc_disabled_notice' );

@@ -81,7 +81,6 @@ function pkwyc_consent_gf_register() {
 				'description_setting',
 				'pkwyc_wording_setting',
 				'css_class_setting',
-				'visibility_setting',
 				'rules_setting',
 			);
 		}
@@ -92,7 +91,7 @@ function pkwyc_consent_gf_register() {
 		public function get_form_editor_inline_script_on_page_render() {
 
 			$script  = 'window.fieldSettings = window.fieldSettings || {};';
-			$script .= 'window.fieldSettings["pkwyc_consent"] = ".conditional_logic_field_setting,.error_message_setting,.label_setting,.label_placement_setting,.description_setting,.pkwyc_wording_setting,.css_class_setting,.visibility_setting,.rules_setting";';
+			$script .= 'window.fieldSettings["pkwyc_consent"] = ".conditional_logic_field_setting,.error_message_setting,.label_setting,.label_placement_setting,.description_setting,.pkwyc_wording_setting,.css_class_setting,.rules_setting";';
 
 			// Gravity Forms calls window["SetDefaultValues_" + type](field) after its
 			// own defaults. There is no JS filter for this; see test-gf-signatures.php.
@@ -389,6 +388,10 @@ function pkwyc_consent_gf_record( $entry, $form ) {
 		if ( ! isset( $field->type ) || $field->type !== 'pkwyc_consent' ) {
 			continue;
 		}
+		// A field the visitor never saw has no wording to record.
+		if ( isset( $field->visibility ) && in_array( $field->visibility, array( 'administrative', 'hidden' ), true ) ) {
+			return;
+		}
 		$record = pkwyc_consent_record( pkwyc_settings(), isset( $field->pkwycWording ) ? $field->pkwycWording : '', gmdate( 'c' ), PKWYC_VERSION );
 		if ( $record['wording'] !== '' ) {
 			gform_update_meta( absint( rgar( $entry, 'id' ) ), 'pkwyc_consent_record', wp_json_encode( $record ), absint( rgar( $form, 'id' ) ) );
@@ -397,6 +400,34 @@ function pkwyc_consent_gf_record( $entry, $form ) {
 	}
 }
 add_action( 'gform_entry_created', 'pkwyc_consent_gf_record', 10, 2 );
+
+/**
+ * Show a Consent field whatever visibility was stored for it.
+ *
+ * An administrative or hidden Consent field is never shown to the visitor, so
+ * it can never be ticked: a required one would refuse every submission and an
+ * optional one would record a refusal nobody was asked for. The editor no
+ * longer offers the setting; this puts back any value stored before it went.
+ * Conditional logic still works.
+ *
+ * @param array|mixed $form A Gravity Forms form array.
+ * @return array|mixed
+ */
+function pkwyc_consent_gf_force_visible( $form ) {
+	if ( ! is_array( $form ) || empty( $form['fields'] ) || ! is_array( $form['fields'] ) ) {
+		return $form;
+	}
+	foreach ( $form['fields'] as $field ) {
+		if ( is_object( $field ) && isset( $field->type ) && $field->type === 'pkwyc_consent' ) {
+			$field->visibility = 'visible';
+		}
+	}
+	return $form;
+}
+foreach ( array( 'gform_pre_render', 'gform_pre_validation', 'gform_pre_submission_filter' ) as $pkwyc_gf_hook ) {
+	add_filter( $pkwyc_gf_hook, 'pkwyc_consent_gf_force_visible' );
+}
+unset( $pkwyc_gf_hook );
 
 /**
  * Show the recorded wording on the entry detail screen.

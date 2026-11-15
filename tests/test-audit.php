@@ -114,4 +114,21 @@ pkwyc_assert( 'group: one feed on form 9', array_column( $g[9], 'id' ), array( 2
 pkwyc_assert( 'group: feeds without a form and junk are dropped', array_keys( $g ), array( 7, 9 ) );
 pkwyc_assert( 'group: error or nothing gives no feeds', pkwyc_audit_group_feeds_by_form( null ), array() );
 
+
+// Forms sending people to Mailchimp with no Consent field at all (audit
+// 2026-11-14): the table listed only forms carrying the field, so the likeliest
+// real leak, a connected form nobody added the field to, never showed.
+$mc_only = array( 'fields' => array( 1 => array( 'id' => 1, 'type' => 'email' ) ), 'providers' => array( 'mailchimpv3' => array( 'c1' => array( 'connection_name' => 'News' ) ) ) );
+pkwyc_assert( 'missing: mailchimp without consent is flagged', pkwyc_audit_wpforms_mailchimp_without_consent( $mc_only ), true );
+$with = $mc_only; $with['fields'][2] = array( 'id' => 2, 'type' => 'pkwyc_consent' );
+pkwyc_assert( 'missing: form with the field is not flagged', pkwyc_audit_wpforms_mailchimp_without_consent( $with ), false );
+pkwyc_assert( 'missing: form without mailchimp is not flagged', pkwyc_audit_wpforms_mailchimp_without_consent( array( 'fields' => array() ) ), false );
+pkwyc_assert( 'missing: empty provider list is not flagged', pkwyc_audit_wpforms_mailchimp_without_consent( array( 'providers' => array( 'mailchimpv3' => array() ) ) ), false );
+
+// Two Consent fields on one form are reported, so they can be removed.
+$two = $with; $two['fields'][3] = array( 'id' => 3, 'type' => 'pkwyc_consent' );
+pkwyc_assert( 'duplicate: count reported', pkwyc_audit_wpforms_form( $two )['consent_fields'], 2 );
+pkwyc_assert( 'duplicate: first field is the one checked', pkwyc_audit_wpforms_form( $two )['consent_field_id'], '2' );
+pkwyc_assert( 'duplicate: single field counts one', pkwyc_audit_wpforms_form( $with )['consent_fields'], 1 );
+
 pkwyc_results();
