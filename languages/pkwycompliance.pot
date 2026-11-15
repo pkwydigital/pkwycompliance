@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T05:15:27+00:00\n"
+"POT-Creation-Date: 2026-11-15T05:18:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: pkwycompliance\n"
@@ -183,12 +183,12 @@ msgstr ""
 msgid "Recorded %1$s by PKWY Compliance %2$s."
 msgstr ""
 
-#: includes/components/consent/signature-guard.php:190
+#: includes/components/consent/signature-guard.php:196
 msgid "PKWY Compliance has turned off its Consent field."
 msgstr ""
 
 #. translators: %s: WPForms or Gravity Forms.
-#: includes/components/consent/signature-guard.php:194
+#: includes/components/consent/signature-guard.php:200
 #, php-format
 msgid "An update to %s changed code the field is built on, and loading the field would have crashed the site. Forms still submit, without the consent box, and no Mailchimp connection that requires Consent subscribes anyone. Update PKWY Compliance; if no newer version is offered yet, Parkway Digital needs to release one."
 msgstr ""
