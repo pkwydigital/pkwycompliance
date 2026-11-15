@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.3
+
+- Fix: the consent sentence used the theme's body text size instead of the form's own label size, so on many themes it was noticeably larger than the rest of the form (21.8px against 14px on Gravity Forms and 16px on WPForms with Twenty Twenty-Five). It now carries each form plugin's own inline checkbox-label class.
+- Fix: on Gravity Forms the sentence dropped below the checkbox instead of sitting beside it. The field now takes Gravity Forms' choice-field layout, as its built-in Consent field does.
+
 ## 1.3.2
 
 - Fix: on Gravity Forms 3.x a newly added PKWY Consent field was labelled "Untitled" and was not Required, because its defaults were set through a hook Gravity Forms does not have. A new field is now labelled "Consent", Required, with the label hidden, as intended. Fields already on forms are unchanged; check that each one has the Required setting you want.

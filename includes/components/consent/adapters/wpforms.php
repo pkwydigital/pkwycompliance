@@ -195,7 +195,7 @@ function pkwyc_consent_wpforms_register() {
 			 * so both start empty.
 			 */
 			printf(
-				'<label><input type="checkbox" %1$s value="agreed" onchange="%2$s"> %3$s</label><input type="hidden" id="%4$s" value="">',
+				'<label class="wpforms-field-label-inline"><input type="checkbox" %1$s value="agreed" onchange="%2$s"> %3$s</label><input type="hidden" id="%4$s" value="">',
 				wpforms_html_attributes( $box_id, $primary['class'], $primary['data'], $primary['attr'] ),
 				esc_attr( "var m=document.getElementById('" . esc_js( $mirror_id ) . "');if(m){m.value=this.checked?'agreed':'';}" ),
 				wp_kses_post( $wording ),

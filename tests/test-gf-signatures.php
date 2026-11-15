@@ -19,6 +19,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 class GF_Field {
 	public $duplicatable = true;
+	public $id;
 	public $type;
 	public $label;
 	public $isRequired;
@@ -33,6 +34,7 @@ class GF_Field {
 	public function get_form_editor_field_settings() { return array(); }
 	public function get_form_editor_inline_script_on_page_render() { return ''; }
 	public function get_field_input( $form, $value = '', $entry = null ) { return ''; }
+	public function get_field_css_class() { return ''; }
 	public function get_field_label( $force_frontend_label = true, $value = '' ) { return 'label'; }
 	public function get_value_submission( $field_values, $get_from_post_global_var = true ) { return ''; }
 	public function validate( $value, $form ) {}
@@ -90,5 +92,33 @@ pkwyc_assert( 'editor script defines SetDefaultValues_pkwyc_consent', is_array( 
 pkwyc_assert( 'new field is labelled Consent', $pkwyc_out['label'] ?? null, 'Consent' );
 pkwyc_assert( 'new field is Required', $pkwyc_out['isRequired'] ?? null, true );
 pkwyc_assert( 'new field hides its label', $pkwyc_out['labelPlacement'] ?? null, 'hidden_label' );
+
+// The wording label carries Gravity Forms' own inline checkbox-label classes,
+// the ones its built-in Consent field uses. A bare <label> fell back to the
+// theme's body text: 21.8px against 14px field labels, line height 1, on
+// Twenty Twenty-Five (found 2026-11-14).
+if ( ! class_exists( 'GFCommon', false ) ) {
+	class GFCommon {
+		public static function is_form_editor() { return false; }
+		public static function get_tabindex() { return ''; }
+	}
+}
+if ( ! function_exists( 'absint' ) ) { function absint( $n ) { return abs( (int) $n ); } }
+if ( ! function_exists( 'rgar' ) ) { function rgar( $a, $k ) { return isset( $a[ $k ] ) ? $a[ $k ] : ''; } }
+if ( ! function_exists( 'pkwyc_settings' ) ) {
+	function pkwyc_settings() {
+		return array( 'company' => 'Example Law Firm', 'privacy_url' => 'https://example.org/privacy/', 'terms_url' => '', 'wording' => 'Yes, {company} can email me. {privacy}' );
+	}
+}
+$pkwyc_field     = GF_Fields::$registered[0];
+$pkwyc_field->id = 4;
+$pkwyc_html      = $pkwyc_field->get_field_input( array( 'id' => 1 ) );
+pkwyc_assert( 'front end renders the checkbox', strpos( $pkwyc_html, 'type="checkbox"' ) !== false, true );
+pkwyc_assert( 'wording label uses Gravity Forms inline label classes', strpos( $pkwyc_html, '<label for="input_1_4" class="gform-field-label gform-field-label--type-inline gfield_consent_label">' ) !== false, true );
+
+// Gravity Forms lays a checkbox and its text side by side only inside a field
+// marked gfield--type-choice, which it adds by type name (checkbox, radio,
+// consent). Ours names itself so the text does not drop below the box.
+pkwyc_assert( 'field marks itself a choice field for Gravity Forms layout', $pkwyc_field->get_field_css_class(), 'gfield--type-choice' );
 
 pkwyc_results();

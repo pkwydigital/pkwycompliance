@@ -114,6 +114,16 @@ function pkwyc_consent_gf_register() {
 			return pkwyc_consent_effective_settings( pkwyc_settings(), isset( $this->pkwycWording ) ? $this->pkwycWording : '' );
 		}
 
+		/**
+		 * Gravity Forms lays a checkbox and its text side by side only in a
+		 * field marked gfield--type-choice, which it adds for the types
+		 * checkbox, radio and consent by name. Without it the wording drops
+		 * below the box.
+		 */
+		public function get_field_css_class() {
+			return 'gfield--type-choice';
+		}
+
 		public function get_field_input( $form, $value = '', $entry = null ) {
 
 			$is_editor = GFCommon::is_form_editor();
@@ -134,7 +144,7 @@ function pkwyc_consent_gf_register() {
 			$input_id = 'input_' . $form_id . '_' . $id;
 
 			return sprintf(
-				'<div class="ginput_container ginput_container_consent"><input id="%1$s" name="%2$s" type="checkbox" value="agreed"%3$s%4$s%5$s /> <label for="%1$s">%6$s</label></div>',
+				'<div class="ginput_container ginput_container_consent"><input id="%1$s" name="%2$s" type="checkbox" value="agreed"%3$s%4$s%5$s /> <label for="%1$s" class="gform-field-label gform-field-label--type-inline gfield_consent_label">%6$s</label></div>',
 				esc_attr( $input_id ),
 				esc_attr( 'input_' . $id ),
 				( $value === 'agreed' ) ? ' checked="checked"' : '',
