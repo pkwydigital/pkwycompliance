@@ -18,6 +18,8 @@
 
 $mode    = isset( $args[0] ) ? $args[0] : 'active';
 $version = isset( $args[1] ) ? $args[1] : '';
+$zip     = isset( $args[2] ) ? $args[2] : '';
+$sig     = isset( $args[3] ) ? $args[3] : '';
 $failed  = 0;
 
 $check = function ( $label, $ok ) use ( &$failed ) {
@@ -66,6 +68,17 @@ if ( $mode === 'disabled' ) {
 	$check( 'Mailchimp "is agreed" rule subscribes nobody even when agreed is posted', $subscribes( 'agreed', $rule_agreed ) === false );
 
 } else {
+
+	// The built zip verifies inside real WordPress (its sodium or sodium_compat),
+	// and a tampered copy does not.
+	if ( $zip !== '' ) {
+		$check( 'signed zip verifies', pkwyc_update_signature_problem( $zip, (string) file_get_contents( $sig ), pkwyc_update_signing_keys() ) === '' );
+		$bad = tempnam( sys_get_temp_dir(), 'pkwyc-tampered' );
+		file_put_contents( $bad, file_get_contents( $zip ) . 'x' );
+		$check( 'tampered zip is refused', pkwyc_update_signature_problem( $bad, (string) file_get_contents( $sig ), pkwyc_update_signing_keys() ) !== '' );
+		unlink( $bad );
+		$check( 'updates are only taken through the signature check', has_filter( 'upgrader_pre_download', 'pkwyc_update_verified_download' ) !== false );
+	}
 
 	// The signature guard must not mistake the real form plugins for broken
 	// ones: a false alarm turns the field off on every site.

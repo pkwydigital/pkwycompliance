@@ -89,4 +89,36 @@ pkwyc_assert( 'no refetch otherwise', pkwyc_update_should_refetch( array() ), fa
 $head = file_get_contents( __DIR__ . '/../pkwycompliance.php' );
 pkwyc_assert( 'header: Update URI points at the repo', (bool) preg_match( '/^ \* Update URI:\s+https:\/\/github\.com\/pkwydigital\/pkwycompliance\s*$/m', $head ), true );
 
+// --- signed releases (2026-11-15) -------------------------------------------
+// Every update must carry pkwycompliance.zip.sig, an Ed25519 signature made
+// with a key that lives only in Parkway's Keychain. Taking over the GitHub
+// account is then not enough to push code to every site.
+pkwyc_assert( 'two trusted keys, primary and backup', pkwyc_update_signing_keys(), array(
+	'cRLtLQOPULfScB7wGlXT+MsBaa5sSHp7n1g8p9d8T1s=',
+	'ktRVUJUNsFB6mPpZgEBEl5v5lodBsCn/V97u4ODQKR4=',
+) );
+pkwyc_assert( 'signature sits beside our package', pkwyc_update_signature_url( $ours ), $ours . '.sig' );
+pkwyc_assert( 'no signature url for a foreign package', pkwyc_update_signature_url( 'https://example.com/pkwycompliance.zip' ), '' );
+
+$k1   = sodium_crypto_sign_keypair();
+$k2   = sodium_crypto_sign_keypair();
+$k3   = sodium_crypto_sign_keypair();
+$keys = array( base64_encode( sodium_crypto_sign_publickey( $k1 ) ), base64_encode( sodium_crypto_sign_publickey( $k2 ) ) );
+$zip  = $tmp . '/signed.zip';
+file_put_contents( $zip, 'PK pretend zip bytes ' . str_repeat( 'x', 500 ) );
+$sig1 = base64_encode( sodium_crypto_sign_detached( file_get_contents( $zip ), sodium_crypto_sign_secretkey( $k1 ) ) );
+$sig2 = base64_encode( sodium_crypto_sign_detached( file_get_contents( $zip ), sodium_crypto_sign_secretkey( $k2 ) ) );
+$sig3 = base64_encode( sodium_crypto_sign_detached( file_get_contents( $zip ), sodium_crypto_sign_secretkey( $k3 ) ) );
+pkwyc_assert( 'signed with the primary key: accepted', pkwyc_update_signature_problem( $zip, $sig1 . "\n", $keys ), '' );
+pkwyc_assert( 'signed with the backup key: accepted', pkwyc_update_signature_problem( $zip, $sig2, $keys ), '' );
+pkwyc_assert( 'signed with another key: refused', pkwyc_update_signature_problem( $zip, $sig3, $keys ) !== '', true );
+pkwyc_assert( 'no signature: refused', pkwyc_update_signature_problem( $zip, '', $keys ) !== '', true );
+pkwyc_assert( 'malformed signature: refused', pkwyc_update_signature_problem( $zip, 'not base64 !!', $keys ) !== '', true );
+pkwyc_assert( 'short signature: refused', pkwyc_update_signature_problem( $zip, base64_encode( 'short' ), $keys ) !== '', true );
+pkwyc_assert( 'no trusted keys: refused', pkwyc_update_signature_problem( $zip, $sig1, array() ) !== '', true );
+pkwyc_assert( 'malformed trusted key is skipped, good one still works', pkwyc_update_signature_problem( $zip, $sig2, array( 'junk', $keys[1] ) ), '' );
+pkwyc_assert( 'missing zip: refused', pkwyc_update_signature_problem( $tmp . '/nope.zip', $sig1, $keys ) !== '', true );
+file_put_contents( $zip, 'tampered', FILE_APPEND );
+pkwyc_assert( 'tampered zip: refused', pkwyc_update_signature_problem( $zip, $sig1, $keys ) !== '', true );
+
 pkwyc_results();

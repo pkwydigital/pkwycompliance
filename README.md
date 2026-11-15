@@ -65,6 +65,8 @@ While `PKWYC_DISABLE` is on, a WPForms Mailchimp connection set to "process if C
 
 Updates come only from this repository's releases (the plugin header carries `Update URI`), only as the attached `pkwycompliance.zip`, and an unpacked update that is not this plugin at the offered version is refused before WordPress removes the old copy.
 
+Every release is also signed (Ed25519, `pkwycompliance.zip.sig` beside the zip), and an update is installed only when its signature matches a public key carried in `includes/updater.php`. The signing keys are held by Parkway Digital, not in this repository or on GitHub.
+
 If a WPForms or Gravity Forms update changes the code the Consent field is built on, the plugin turns the field off for that form plugin rather than let it crash the site, with the same safe Mailchimp behaviour as `PKWYC_DISABLE` and an error notice in the admin until a fitting release of this plugin is installed.
 
 ## Uninstalling

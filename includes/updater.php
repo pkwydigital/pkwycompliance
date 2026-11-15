@@ -135,6 +135,70 @@ function pkwyc_update_should_refetch( $query ) {
 	return is_array( $query ) && ! empty( $query['force-check'] );
 }
 
+/**
+ * The public keys a release must be signed with. Their secret halves never
+ * leave Parkway's Keychain (claude:pkwycompliance:release-signing, and a
+ * backup kept offline), so control of the GitHub account alone cannot push
+ * code to the sites. Either key is accepted, so losing one is not fatal.
+ */
+function pkwyc_update_signing_keys() {
+	return array(
+		'cRLtLQOPULfScB7wGlXT+MsBaa5sSHp7n1g8p9d8T1s=', // primary
+		'ktRVUJUNsFB6mPpZgEBEl5v5lodBsCn/V97u4ODQKR4=', // backup
+	);
+}
+
+/**
+ * Where the signature of one of our packages is: the release asset
+ * pkwycompliance.zip.sig beside pkwycompliance.zip. '' for anything else.
+ */
+function pkwyc_update_signature_url( $package ) {
+	return pkwyc_update_package_is_ours( $package ) ? (string) $package . '.sig' : '';
+}
+
+/**
+ * Why this downloaded zip must not be installed, or '' when it is signed by a
+ * trusted key.
+ *
+ * @param string   $zip_path Downloaded file.
+ * @param string   $sig_text Contents of the .sig asset: one base64 signature.
+ * @param string[] $keys     Trusted base64 public keys.
+ */
+function pkwyc_update_signature_problem( $zip_path, $sig_text, $keys ) {
+
+	if ( ! function_exists( 'sodium_crypto_sign_verify_detached' ) ) {
+		return 'this site cannot check signatures (no sodium)';
+	}
+
+	if ( ! is_readable( (string) $zip_path ) ) {
+		return 'the download is missing';
+	}
+
+	$sig = base64_decode( trim( (string) $sig_text ), true );
+
+	if ( $sig === false || strlen( $sig ) !== SODIUM_CRYPTO_SIGN_BYTES ) {
+		return 'the release has no valid signature';
+	}
+
+	$zip = (string) file_get_contents( $zip_path );
+
+	foreach ( (array) $keys as $key ) {
+		$public = base64_decode( (string) $key, true );
+		if ( $public === false || strlen( $public ) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ) {
+			continue;
+		}
+		try {
+			if ( sodium_crypto_sign_verify_detached( $sig, $zip, $public ) ) {
+				return '';
+			}
+		} catch ( Throwable $e ) {
+			continue;
+		}
+	}
+
+	return 'the signature does not match a trusted key';
+}
+
 /* -------------------------------------------------------------------------
  * WordPress wiring. Everything above is pure and tested; everything below
  * talks to WordPress and GitHub.
@@ -272,6 +336,49 @@ function pkwyc_update_check_source( $source, $remote_source, $upgrader, $hook_ex
 	return $source;
 }
 add_filter( 'upgrader_source_selection', 'pkwyc_update_check_source', 11, 4 );
+
+/**
+ * Download an update to this plugin only together with its signature, and
+ * install it only when the signature checks out. Any route through
+ * WordPress's upgrader counts: automatic, Update now, bulk, wp plugin update.
+ * A zip uploaded by hand on Plugins, Add New is not an update and not checked.
+ */
+function pkwyc_update_verified_download( $reply, $package, $upgrader, $hook_extra = array() ) {
+
+	if ( $reply !== false || empty( $hook_extra['plugin'] ) || $hook_extra['plugin'] !== PKWYC_BASENAME ) {
+		return $reply;
+	}
+
+	if ( ! pkwyc_update_package_is_ours( $package ) ) {
+		return new WP_Error( 'pkwyc_unsigned', 'PKWY Compliance update refused: it does not come from the plugin\'s own releases.' );
+	}
+
+	$sig = wp_remote_get( pkwyc_update_signature_url( $package ), array( 'timeout' => 30 ) );
+
+	if ( is_wp_error( $sig ) || (int) wp_remote_retrieve_response_code( $sig ) !== 200 ) {
+		return new WP_Error( 'pkwyc_unsigned', 'PKWY Compliance update refused: the release has no signature.' );
+	}
+
+	if ( ! function_exists( 'download_url' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
+	$file = download_url( $package, 300 );
+
+	if ( is_wp_error( $file ) ) {
+		return $file;
+	}
+
+	$problem = pkwyc_update_signature_problem( $file, wp_remote_retrieve_body( $sig ), pkwyc_update_signing_keys() );
+
+	if ( $problem !== '' ) {
+		@unlink( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		return new WP_Error( 'pkwyc_unsigned', 'PKWY Compliance update refused: ' . $problem . '.' );
+	}
+
+	return $file;
+}
+add_filter( 'upgrader_pre_download', 'pkwyc_update_verified_download', 10, 4 );
 
 /**
  * Check again on Dashboard, Updates also refetches the latest release.

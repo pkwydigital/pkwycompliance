@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.6
+
+- Updates are signed. Every release carries pkwycompliance.zip.sig, an Ed25519 signature made with a key that never leaves Parkway's own machine, and the plugin installs an update only when that signature matches one of the two public keys it carries (a main key and a backup). An update that is unsigned, signed with any other key, or altered after signing is refused, so control of the GitHub account alone can no longer push code to sites. This applies to every update route through WordPress (automatic, Update now, bulk, wp plugin update); uploading a zip by hand on Plugins, Add New is not affected.
+
 ## 1.3.5
 
 - A WPForms or Gravity Forms update that changes the code the Consent field is built on no longer takes the site down. Before loading the field, the plugin checks that the form plugin still fits it. If it does not, the field is turned off for that form plugin instead of causing a fatal error on every page: forms still submit, without the box; no Mailchimp connection that requires Consent subscribes anyone; Gravity Forms stops requiring the box; administrators see an error notice naming the form plugin and the reason, and the reason is written to the PHP error log. Updating PKWY Compliance to a release that fits brings the field back.
