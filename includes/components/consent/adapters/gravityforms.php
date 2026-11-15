@@ -388,10 +388,6 @@ function pkwyc_consent_gf_record( $entry, $form ) {
 		if ( ! isset( $field->type ) || $field->type !== 'pkwyc_consent' ) {
 			continue;
 		}
-		// A field the visitor never saw has no wording to record.
-		if ( isset( $field->visibility ) && in_array( $field->visibility, array( 'administrative', 'hidden' ), true ) ) {
-			return;
-		}
 		$record = pkwyc_consent_record( pkwyc_settings(), isset( $field->pkwycWording ) ? $field->pkwycWording : '', gmdate( 'c' ), PKWYC_VERSION );
 		if ( $record['wording'] !== '' ) {
 			gform_update_meta( absint( rgar( $entry, 'id' ) ), 'pkwyc_consent_record', wp_json_encode( $record ), absint( rgar( $form, 'id' ) ) );

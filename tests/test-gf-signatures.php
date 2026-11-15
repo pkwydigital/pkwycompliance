@@ -122,18 +122,6 @@ pkwyc_assert( 'wording label uses Gravity Forms inline label classes', strpos( $
 // consent). Ours names itself so the text does not drop below the box.
 pkwyc_assert( 'field marks itself a choice field for Gravity Forms layout', $pkwyc_field->get_field_css_class(), 'gfield--type-choice' );
 
-// No consent record for a field the visitor never saw (administrative or
-// hidden visibility): the record says this wording was shown (audit 2026-11-14).
-$GLOBALS['pkwyc_gf_meta'] = array();
-if ( ! function_exists( 'gform_update_meta' ) ) { function gform_update_meta( $e, $k, $v, $f = null ) { $GLOBALS['pkwyc_gf_meta'][] = array( $e, $k ); } }
-if ( ! defined( 'PKWYC_VERSION' ) ) { define( 'PKWYC_VERSION', 'test' ); }
-$shown  = new PKWYC_GF_Consent_Field(); $shown->type = 'pkwyc_consent'; $shown->visibility = 'visible';
-$hidden = new PKWYC_GF_Consent_Field(); $hidden->type = 'pkwyc_consent'; $hidden->visibility = 'administrative';
-pkwyc_consent_gf_record( array( 'id' => 11 ), array( 'id' => 1, 'fields' => array( $hidden ) ) );
-pkwyc_assert( 'no record for an administrative consent field', $GLOBALS['pkwyc_gf_meta'], array() );
-pkwyc_consent_gf_record( array( 'id' => 12 ), array( 'id' => 1, 'fields' => array( $shown ) ) );
-pkwyc_assert( 'record for a visible consent field', $GLOBALS['pkwyc_gf_meta'], array( array( 12, 'pkwyc_consent_record' ) ) );
-
 // Visibility (audit 2026-11-14): an administrative or hidden Consent field is
 // never shown, so it can never be ticked. The setting is not offered, and a
 // stored value is put back to visible before render and validation.

@@ -212,6 +212,11 @@ pkwyc_assert( 'switch wpforms: value always blank', $ks['value'], '' );
 pkwyc_assert( 'switch wpforms: id and name kept', array( $ks['id'], $ks['name'] ), array( 5, 'Marketing' ) );
 $ks2 = pkwyc_kill_switch_wpforms_field( 7, array() );
 pkwyc_assert( 'switch wpforms: missing label falls back to Consent', $ks2['name'], 'Consent' );
+// The blank field must also be read as text, or WPForms' choice branch turns
+// '' into false and "Consent is agreed" passes for everyone (review 2026-11-14).
+$ks_hooks = array_column( pkwyc_kill_switch_wpforms_hooks(), 1, 0 );
+pkwyc_assert( 'switch wpforms: format hook registered', $ks_hooks['wpforms_process_format_pkwyc_consent'] ?? '', 'pkwyc_kill_switch_wpforms_format' );
+pkwyc_assert( 'switch wpforms: consent read as a text field by conditional logic', $ks_hooks['wpforms_conditional_logic_core_get_text_based_fields'] ?? '', 'pkwyc_consent_add_conditional_type' );
 
 // The builder note does not depend on whether the form has a Mailchimp
 // connection: that state changes in the builder without a reload, and a note

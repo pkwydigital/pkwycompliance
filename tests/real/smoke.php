@@ -41,16 +41,19 @@ $form_data = array(
 	),
 );
 $rule = array( array( array( 'field' => '5', 'operator' => '!e' ) ) );
+// Also "process if Consent is agreed", which the forms table counts as gated.
+$rule_agreed = array( array( array( 'field' => '5', 'operator' => '==', 'value' => 'agreed' ) ) );
 
 $process = wpforms()->obj( 'process' );
 
 // Run WPForms' own format step for the Consent field, then its own rule check.
-$subscribes = function ( $posted ) use ( $form_data, $rule, $process ) {
+$subscribes = function ( $posted, $use = null ) use ( $form_data, $rule, $process ) {
+	$use = $use ? $use : $rule;
 	$process->fields = array( 1 => array( 'id' => 1, 'type' => 'email', 'name' => 'Email', 'value' => 'pat@example.org' ) );
 	if ( has_action( 'wpforms_process_format_pkwyc_consent' ) ) {
 		do_action( 'wpforms_process_format_pkwyc_consent', 5, $posted, $form_data );
 	}
-	return (bool) wpforms_conditional_logic()->process( $process->fields, $form_data, $rule );
+	return (bool) wpforms_conditional_logic()->process( $process->fields, $form_data, $use );
 };
 
 if ( $mode === 'disabled' ) {
@@ -59,6 +62,8 @@ if ( $mode === 'disabled' ) {
 	$check( 'the field class is not loaded', ! class_exists( 'PKWYC_WPForms_Consent_Field', false ) );
 	$check( 'Mailchimp rule subscribes nobody who did not tick', $subscribes( '' ) === false );
 	$check( 'Mailchimp rule subscribes nobody even when agreed is posted', $subscribes( 'agreed' ) === false );
+	$check( 'Mailchimp "is agreed" rule subscribes nobody', $subscribes( '', $rule_agreed ) === false );
+	$check( 'Mailchimp "is agreed" rule subscribes nobody even when agreed is posted', $subscribes( 'agreed', $rule_agreed ) === false );
 
 } else {
 
@@ -67,6 +72,8 @@ if ( $mode === 'disabled' ) {
 	$check( 'Mailchimp rule: unticked is not subscribed', $subscribes( '' ) === false );
 	$check( 'Mailchimp rule: ticked is subscribed', $subscribes( 'agreed' ) === true );
 	$check( 'Mailchimp rule: a forged value is not subscribed', $subscribes( 'yes please' ) === false );
+	$check( 'Mailchimp "is agreed" rule: unticked is not subscribed', $subscribes( '', $rule_agreed ) === false );
+	$check( 'Mailchimp "is agreed" rule: ticked is subscribed', $subscribes( 'agreed', $rule_agreed ) === true );
 
 	// The second Consent field is never shown, so it must never refuse a submission.
 	$process->errors = array();

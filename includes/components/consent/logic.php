@@ -491,3 +491,17 @@ function pkwyc_kill_switch_wpforms_format( $field_id, $field_submit, $form_data 
 		$process->fields[ $field_id ] = pkwyc_kill_switch_wpforms_field( $field_id, $form_data );
 	}
 }
+
+/**
+ * The WPForms hooks the emergency switch keeps, as array( hook, callback,
+ * priority, accepted args ). Both are needed: the format step records the
+ * field as blank, and the text-field filter makes conditional logic compare
+ * that blank as text. Without the second, WPForms' choice-field branch turns
+ * '' into false, and "Consent is agreed" matches it loosely and passes.
+ */
+function pkwyc_kill_switch_wpforms_hooks() {
+	return array(
+		array( 'wpforms_process_format_pkwyc_consent', 'pkwyc_kill_switch_wpforms_format', 10, 3 ),
+		array( 'wpforms_conditional_logic_core_get_text_based_fields', 'pkwyc_consent_add_conditional_type', 10, 1 ),
+	);
+}

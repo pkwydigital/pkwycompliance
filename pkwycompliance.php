@@ -87,7 +87,9 @@ function pkwyc_load_components() {
 		}
 		// WPForms would otherwise skip every Mailchimp rule on Consent and
 		// subscribe everyone. See pkwyc_kill_switch_wpforms_field().
-		add_action( 'wpforms_process_format_pkwyc_consent', 'pkwyc_kill_switch_wpforms_format', 10, 3 );
+		foreach ( pkwyc_kill_switch_wpforms_hooks() as $hook ) {
+			add_filter( $hook[0], $hook[1], $hook[2], $hook[3] );
+		}
 		return;
 	}
 
