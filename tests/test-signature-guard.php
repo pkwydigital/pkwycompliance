@@ -87,6 +87,11 @@ class PKWYC_Guard_Protected {
 	protected function render( $a, $b, $c = null ) {} // child widening to public is fine
 	public function init() {}
 }
+abstract class PKWYC_Guard_Abstract_Fewer {
+	public $type;
+	abstract public function render( $a ); // abstract: a mismatch is fatal on every PHP
+	public function init() {}
+}
 class PKWYC_Guard_Missing {
 	public $type;
 	public function init() {} // render() gone from the parent: the child simply adds it
@@ -97,13 +102,22 @@ pkwyc_assert( 'abstract methods the adapter implements: no problems', pkwyc_sign
 pkwyc_assert( 'protected parent method: no problems', pkwyc_signature_problems( 'PKWYC_Guard_Protected', $spec ), array() );
 pkwyc_assert( 'method gone from parent: no problems', pkwyc_signature_problems( 'PKWYC_Guard_Missing', $spec ), array() );
 
+// Before PHP 8 a parameter mismatch against a method that is not abstract is
+// only a warning, so the guard must let it through there.
 foreach ( array(
 	'PKWYC_Guard_Fewer_Required' => 'parent requires fewer parameters',
 	'PKWYC_Guard_More_Params'    => 'parent takes more parameters',
+	'PKWYC_Guard_By_Ref'         => 'parent takes a parameter by reference',
+) as $class => $label ) {
+	$p = pkwyc_signature_problems( $class, $spec );
+	pkwyc_assert( "{$label}: " . ( PHP_VERSION_ID >= 80000 ? 'reported' : 'allowed before PHP 8' ), count( $p ) >= 1, PHP_VERSION_ID >= 80000 );
+}
+
+foreach ( array(
+	'PKWYC_Guard_Abstract_Fewer' => 'abstract parent requires fewer parameters',
 	'PKWYC_Guard_Return_Type'    => 'parent declares a return type',
 	'PKWYC_Guard_Final'          => 'parent method is final',
 	'PKWYC_Guard_Static'         => 'parent method is static',
-	'PKWYC_Guard_By_Ref'         => 'parent takes a parameter by reference',
 	'PKWYC_Guard_New_Abstract'   => 'parent has a new abstract method',
 	'PKWYC_Guard_Typed_Prop'     => 'parent property has a type',
 	'PKWYC_Guard_Static_Prop'    => 'parent property is static',
@@ -120,7 +134,7 @@ $src   = file_get_contents( __FILE__ );
 $start = strpos( $src, 'class PKWYC_Guard_Good' );
 $end   = strpos( $src, "pkwyc_assert( 'matching parent" );
 $defs  = substr( $src, $start, $end - $start );
-foreach ( array( 'PKWYC_Guard_Good', 'PKWYC_Guard_Abstract_Ok', 'PKWYC_Guard_Protected', 'PKWYC_Guard_Missing', 'PKWYC_Guard_Fewer_Required', 'PKWYC_Guard_More_Params', 'PKWYC_Guard_Return_Type', 'PKWYC_Guard_Final', 'PKWYC_Guard_Static', 'PKWYC_Guard_By_Ref', 'PKWYC_Guard_New_Abstract', 'PKWYC_Guard_Typed_Prop', 'PKWYC_Guard_Static_Prop', 'PKWYC_Guard_Final_Class' ) as $class ) {
+foreach ( array( 'PKWYC_Guard_Good', 'PKWYC_Guard_Abstract_Ok', 'PKWYC_Guard_Protected', 'PKWYC_Guard_Missing', 'PKWYC_Guard_Fewer_Required', 'PKWYC_Guard_More_Params', 'PKWYC_Guard_Abstract_Fewer', 'PKWYC_Guard_Return_Type', 'PKWYC_Guard_Final', 'PKWYC_Guard_Static', 'PKWYC_Guard_By_Ref', 'PKWYC_Guard_New_Abstract', 'PKWYC_Guard_Typed_Prop', 'PKWYC_Guard_Static_Prop', 'PKWYC_Guard_Final_Class' ) as $class ) {
 	$child = "<?php\n" . $defs . "\nclass Child_{$class} extends {$class} { public \$type; public function render( \$a, \$b, \$c = null ) {} public function init() {} }\necho 'declared';\n";
 	$file  = sys_get_temp_dir() . "/pkwyc-guard-{$class}-" . getmypid() . '.php';
 	file_put_contents( $file, $child );

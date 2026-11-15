@@ -99,7 +99,7 @@ pkwyc_assert( 'WPForms spec fits the parent stub', pkwyc_signature_problems( 'WP
 // the class is not declared, the failure is recorded, and the fail-closed hooks go on.
 $pkwyc_broken = "<?php\n"
 	. "define( 'ABSPATH', __DIR__ );\n"
-	. "abstract class WPForms_Field { abstract public function init(); public function field_display( \$field, \$field_atts, \$form_data, \$extra ) {} }\n"
+	. "abstract class WPForms_Field { abstract public function init(); abstract public function field_display( \$field, \$field_atts, \$form_data, \$extra ); }\n"
 	. "function did_action( \$h ) { return 1; }\n"
 	. "\$GLOBALS['pkwyc_hooks'] = array();\n"
 	. "function add_filter( \$h, \$c, \$p = 10, \$a = 1 ) { \$GLOBALS['pkwyc_hooks'][] = \$h; return true; }\n"

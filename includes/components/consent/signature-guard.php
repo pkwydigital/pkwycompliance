@@ -74,6 +74,12 @@ function pkwyc_signature_problems( $parent, $spec ) {
 		if ( $m->hasReturnType() ) {
 			$problems[] = $label . ' declares a return type';
 		}
+		// Before PHP 8 a parameter mismatch against a method that is not
+		// abstract is only a warning, and the class still declares. Refusing
+		// it there would turn the field off on a site that runs.
+		if ( PHP_VERSION_ID < 80000 && ! $m->isAbstract() ) {
+			continue;
+		}
 		if ( (int) $shape[0] < $m->getNumberOfParameters() ) {
 			$problems[] = $label . ' takes ' . $m->getNumberOfParameters() . ' parameters, the adapter ' . (int) $shape[0];
 		}
